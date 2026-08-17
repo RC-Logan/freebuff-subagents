@@ -121,22 +121,20 @@ if [[ -n "$TASK_TEXT" ]]; then
   printf '%s\n' "$TASK_TEXT" > "$TMP_TASK"
   TASK_FILE="$TMP_TASK"
 fi
-# Compose the final task: role operating rules (if any) + the shared quality
-# and documentation baseline + the user task. The baseline
-# (prompts/quality-and-docs.md) is injected into EVERY delegation so the
-# documentation/quality discipline holds for all tasks — with or without a
-# role. It is repo hygiene, not a role: custom roles get it automatically.
-COMPOSED="$(mktemp /tmp/oh-task.XXXXXX)"
+# Compose the final task: role operating rules (if any) + the user task.
+# Quality standards are deliberately NOT imposed here — they belong to the
+# person running the delegation and their project's conventions, not to this
+# wrapper. (Repo hygiene for agents working on THIS repo lives in
+# docs/REPO_HYGIENE.md — it is not injected into delegated tasks.)
 if [[ -n "$ROLE" && -f "$ROLE_PROMPT" ]]; then
+  COMPOSED="$(mktemp /tmp/oh-task.XXXXXX)"
   cat "$ROLE_PROMPT" > "$COMPOSED"
-  printf '\n\n' >> "$COMPOSED"
+  printf '\n\n# Task\n\n' >> "$COMPOSED"
+  cat "$TASK_FILE" >> "$COMPOSED"
+  rm -f "$TMP_TASK"
+  TASK_FILE="$COMPOSED"
+  TMP_TASK="$COMPOSED"
 fi
-cat "$SCRIPT_DIR/prompts/quality-and-docs.md" >> "$COMPOSED"
-printf '\n\n# Task\n\n' >> "$COMPOSED"
-cat "$TASK_FILE" >> "$COMPOSED"
-rm -f "$TMP_TASK"
-TASK_FILE="$COMPOSED"
-TMP_TASK="$COMPOSED"
 # Make the task path absolute before any cd
 TASK_FILE="$(cd "$(dirname "$TASK_FILE")" && pwd)/$(basename "$TASK_FILE")"
 

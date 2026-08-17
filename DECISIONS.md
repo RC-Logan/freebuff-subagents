@@ -119,16 +119,14 @@ source (project-local MCP registration exists; version-dependent in the
 shipped binaries). Decision: MCP is the integrated path; the skill is not
 kept as a living fallback — it is preserved in git history (decision 16).
 
-### 14. Quality & documentation baseline — ADOPTED
-Every delegation now carries an injected shared baseline
-(`prompts/quality-and-docs.md`) — **repo hygiene, not a role**: it lives
-outside the role system and applies to every task, on top of any role rules.
-It mandates: docs kept in sync with code, decisions recorded, no dead
-code/orphaned TODOs, smallest change, typecheck + tests before done, verified
-(never assumed) results, explicit caveats, and a required four-part final
-report. The wrapper injects it deterministically into every task (with or
-without a role), so the discipline survives new and custom roles without
-being re-written.
+### 14. Quality: the delegator's call; hygiene is repo-level — ADOPTED, then CORRECTED
+First attempt injected a shared quality/documentation baseline into every
+delegated task (`prompts/quality-and-docs.md`). **Corrected:** imposing
+quality standards on delegated tasks is arbitrary — quality belongs to the
+person running the delegation and their project's conventions. The wrapper
+now injects nothing beyond the role's rules. Repo hygiene for agents working
+on THIS repo is a documented standard (`docs/REPO_HYGIENE.md`) enforced by
+the repo's own test suite — not injected into other people's tasks.
 
 ### 15. Published to GitHub — DONE
 Repo `freebuff-subagents` (private) created on the `RC-Logan` account and

@@ -13,17 +13,13 @@ The Freebuff CLI used to spawn named subagents. This repo restores the same
 Invoke with `./bin/delegate.sh -t "<task>" -r <role>`. `-m <model>`
 overrides the model for that run.
 
-## Quality & documentation baseline (applies to every delegation)
+## Repo hygiene (not part of delegated work)
 
-This is **not a role** — it is repo hygiene applied to every delegated agent.
-The wrapper injects `prompts/quality-and-docs.md` into every task, with or
-without a role, on top of any role rules. It mandates: docs kept in sync with
-code, decisions recorded, no dead code / orphaned TODOs, smallest-change
-discipline, typecheck + tests before reporting done, verified (never assumed)
-results, explicit caveats, and a required four-part final report (files
-changed / commands run / verified / caveats). Role prompts don't need to
-repeat it — the wrapper guarantees it, so custom roles inherit it
-automatically.
+Quality standards are deliberately **not** imposed on delegated tasks — that
+is the delegator's call, and the wrapper adds nothing beyond the role's
+rules. Agents working on *this* repo follow
+[`docs/REPO_HYGIENE.md`](docs/REPO_HYGIENE.md) (docs in sync, decisions
+logged in `DECISIONS.md`, suite green before commit).
 
 | Role | Provider | Default model | Capability |
 |---|---|---|---|
@@ -73,8 +69,7 @@ mkdir roles/my-role
 #   description=...
 #   provider=text          # text | vision
 #   model=your-default-model
-# roles/my-role/prompt.md:  (operating rules, injected verbatim before the
-#                            shared hygiene baseline in prompts/)
+# roles/my-role/prompt.md:  (operating rules, injected verbatim)
 ```
 
 The shared baseline is added automatically; you only write the role-specific

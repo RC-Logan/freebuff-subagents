@@ -69,8 +69,6 @@ not_contains "Freebuff session token does NOT leak" "$ENV_DUMP" "FREE_BUFF_SESSI
 not_contains "Freebuff API key does NOT leak" "$ENV_DUMP" "FREEBUFF_API_KEY"
 contains "invoked headless" "$ARGS_DUMP" "--headless"
 contains "task passed via -f file" "$ARGS_DUMP" "-f"
-contains "quality baseline injected without a role" "$HOME/.mock-task.dump" "Quality and documentation standards"
-contains "user task present after baseline" "$HOME/.mock-task.dump" "hello task"
 
 printf '1' > "$HOME/.mock-exit"
 set +e
@@ -114,17 +112,7 @@ echo "== delegate.sh: role resolution"
 check "role browser-use exits 0" "$?" "0"
 contains "role pins vision model" "$ENV_DUMP" "LLM_MODEL=openai/minimaxai/minimax-m3"
 contains "role operating rules injected" "$HOME/.mock-task.dump" "Operating rules: browser-use"
-contains "quality baseline injected with a role" "$HOME/.mock-task.dump" "Quality and documentation standards"
 contains "user task present after rules" "$HOME/.mock-task.dump" "build a button"
-# ordering: role rules, then shared baseline, then the user task
-RULES_LN=$(grep -n "Operating rules: browser-use" "$HOME/.mock-task.dump" | head -1 | cut -d: -f1)
-QUAL_LN=$(grep -n "Quality and documentation standards" "$HOME/.mock-task.dump" | head -1 | cut -d: -f1)
-TASK_LN=$(grep -n "build a button" "$HOME/.mock-task.dump" | head -1 | cut -d: -f1)
-if [[ "$RULES_LN" -lt "$QUAL_LN" && "$QUAL_LN" -lt "$TASK_LN" ]]; then
-  ok "task order: role rules -> baseline -> user task"
-else
-  bad "task order wrong (rules=$RULES_LN baseline=$QUAL_LN task=$TASK_LN)"
-fi
 
 "$ROOT/bin/delegate.sh" -t "summarize" -r researcher > /dev/null 2>&1
 contains "researcher role uses GLM" "$ENV_DUMP" "LLM_MODEL=openai/z-ai/glm-5.2"

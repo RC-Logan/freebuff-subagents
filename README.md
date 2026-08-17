@@ -54,14 +54,12 @@ VISION_API_KEY=... ./bin/delegate.sh -r browser-use -t "..."
 The Freebuff CLI used to spawn named subagents. Those *capabilities* are
 restored — and exceeded — as **enforced roles** in `roles/<name>/`: each role
 pins its NIM model (`role.conf`) and carries its own operating rules
-(`prompt.md`) that the wrapper injects into every delegation. On top of those,
-the wrapper injects a shared **quality & documentation baseline**
-(`prompts/quality-and-docs.md`) into **every** delegation — docs kept in
-sync, decisions recorded, smallest change, typecheck/tests before done,
-verified results, honest caveats, and a required four-part final report.
-`-r <role>` picks the role; every role runs through the same sandboxed,
-sanitized wrapper. See [`ROLES.md`](ROLES.md) for the table and how to add
-roles.
+(`prompt.md`) that the wrapper injects into every delegation. `-r <role>`
+picks the role; every role runs through the same sandboxed, sanitized
+wrapper. Quality standards are deliberately **not** imposed on delegated
+tasks — that's your project's call. (Repo hygiene for agents working on
+*this* repo: [`docs/REPO_HYGIENE.md`](docs/REPO_HYGIENE.md).) See
+[`ROLES.md`](ROLES.md) for the table and how to add roles.
 
 ## First-time setup (reproduce on a new instance)
 
@@ -167,10 +165,10 @@ bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
-prompts/              # shared prompt fragments: quality & documentation baseline (injected into every delegation)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md            # research, concerns, safe-boundary audit
+docs/REPO_HYGIENE.md                    # standards for agents working on this repo
 ```
 
 ## Safe boundary (read before changing anything)
