@@ -1,9 +1,11 @@
-# OpenHands ↔ NVIDIA NIM delegation for Freebuff
+# Freebuff Subagents
 
-Reproducible setup for delegating complex multi-step work from a Freebuff
-harness to an autonomous **OpenHands** subagent running on **NVIDIA NIM**
-(GLMs and MiniMax-M3) — as a pure local subprocess, with zero changes to the
-Freebuff client.
+A **Freebuff** extension: safe, reproducible subagent delegation for the
+Freebuff harness via an autonomous **OpenHands** subagent running on
+**NVIDIA NIM** (GLM-5.2 for text/code, MiniMax-M3 for vision/browser) — as a
+pure local subprocess, with zero changes to the Freebuff client. Restores the
+subagent capabilities the Freebuff CLI used to have (browser-use, researcher,
+code-editor, code-reviewer, context-pruner) as enforced roles.
 
 Why this exists: the Freebuff CLI root agent no longer spawns subagents
 (base2 → base3 switch), and the main-thread model can be text-only — so
@@ -19,15 +21,20 @@ as portable POSIX bash with macOS quirks handled explicitly (trailing-`X`
 behavior is **not yet tested** — run `./tests/run-tests.sh` on any new platform
 before relying on it.
 
-## Model routing
+## Providers & model routing
 
-| Workload | Model | NIM ID |
+Two pluggable provider types (configure in `.env`):
+
+| Provider | Purpose | Default (NVIDIA NIM) |
 |---|---|---|
-| Text/code reasoning, agent loop | GLM-5.2 | `z-ai/glm-5.2` |
-| Vision, screenshots, browser/design | MiniMax-M3 | `minimaxai/minimax-m3` |
+| `text` | High-reasoning, non-vision: coding, research, review | GLM-5.2 (`z-ai/glm-5.2`) |
+| `vision` | Multimodal: browser, screenshots, design | MiniMax-M3 (`minimaxai/minimax-m3`) |
 
-Model is chosen **per call** (`-m`), so the main thread can stay on your
-coding model while delegated vision work runs on M3.
+Each provider can point at **your own API** (`*_MODEL` / `*_API_KEY` /
+`*_BASE_URL`). Vision falls back to text; text falls back to the NVIDIA
+defaults — so a single-model setup works (set `TEXT_MODEL`, leave `VISION_*`
+empty), and the minimal NVIDIA setup is just `NVIDIA_API_KEY`. Model is
+resolved per call; `-m` overrides it.
 
 ## Capability roles
 
@@ -125,4 +132,5 @@ docs/WHY.md            # research, concerns, safe-boundary audit
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
 | Skill doesn't appear in Freebuff | The skills path is wrong for your install — verify `FREE_BUFF_SKILLS_DIR` (audit §1c #4). |
-| Model name rejected | NIM needs the **bare** ID in `.env`; only OpenHands config gets the `openai/` prefix. |
+| Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
+| Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

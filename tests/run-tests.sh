@@ -17,7 +17,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MOCKS="$ROOT/tests/mocks"
 WORK="$(mktemp -d /tmp/oh-tests-XXXX)"
-trap 'rm -rf "$WORK"' EXIT
+RESTORED=0
+ENV_FILE="$ROOT/.env"
+# Simulate a fresh clone: move any real .env aside so tests control all env vars
+# (delegate.sh sources .env when present). Restored on exit.
+if [[ -f "$ENV_FILE" ]]; then
+  mv "$ENV_FILE" "$ENV_FILE.suite-backup"
+  RESTORED=1
+fi
+trap 'rm -rf "$WORK"; if [[ "$RESTORED" == "1" ]]; then mv "$ENV_FILE.suite-backup" "$ENV_FILE"; fi' EXIT
 
 PASS=0
 FAIL=0
@@ -115,6 +123,43 @@ set +e
 RC=$?
 set -e
 check "unknown role rejected" "$RC" "3"
+
+# ---- pluggable providers -------------------------------------------------------
+echo "== delegate.sh: pluggable providers"
+unset TEXT_MODEL TEXT_API_KEY TEXT_BASE_URL VISION_MODEL VISION_API_KEY VISION_BASE_URL
+
+export TEXT_MODEL="my-text-model"
+export TEXT_API_KEY="text-key-123"
+export TEXT_BASE_URL="https://text.example/v1"
+"$ROOT/bin/delegate.sh" -t "edit" -r code-editor > /dev/null 2>&1
+contains "text provider model used" "$ENV_DUMP" "LLM_MODEL=openai/my-text-model"
+contains "text provider key used" "$ENV_DUMP" "LLM_API_KEY=text-key-123"
+contains "text provider base used" "$ENV_DUMP" "LLM_BASE_URL=https://text.example/v1"
+
+# vision falls back to the text provider when VISION_* is unset (single-model setup)
+"$ROOT/bin/delegate.sh" -t "browse" -r browser-use > /dev/null 2>&1
+contains "vision falls back to text model" "$ENV_DUMP" "LLM_MODEL=openai/my-text-model"
+contains "vision falls back to text key" "$ENV_DUMP" "LLM_API_KEY=text-key-123"
+
+# vision provider overrides text
+unset VISION_MODEL VISION_API_KEY VISION_BASE_URL
+export VISION_MODEL="my-vision-model"
+export VISION_API_KEY="vision-key-456"
+export VISION_BASE_URL="https://vision.example/v1"
+"$ROOT/bin/delegate.sh" -t "browse" -r browser-use > /dev/null 2>&1
+contains "vision provider model used" "$ENV_DUMP" "LLM_MODEL=openai/my-vision-model"
+contains "vision provider key used" "$ENV_DUMP" "LLM_API_KEY=vision-key-456"
+contains "vision provider base used" "$ENV_DUMP" "LLM_BASE_URL=https://vision.example/v1"
+
+unset TEXT_MODEL TEXT_API_KEY TEXT_BASE_URL VISION_MODEL VISION_API_KEY VISION_BASE_URL
+
+# no key anywhere fails fast
+set +e
+env -u NVIDIA_API_KEY -u TEXT_API_KEY -u VISION_API_KEY \
+  "$ROOT/bin/delegate.sh" -t "nokey" > "$T/nokey.log" 2>&1
+RC=$?
+set -e
+check "missing API key rejected" "$RC" "1"
 
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"

@@ -42,25 +42,49 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-: "${NVIDIA_API_KEY:?NVIDIA_API_KEY is required (set it in .env)}"
-MODEL="${MODEL:-${DEFAULT_MODEL:-}}"
-BASE_URL="https://integrate.api.nvidia.com/v1"
+# ---- provider + role resolution ------------------------------------------------
+# Two provider types, pluggable per model:
+#   text   = high-reasoning, non-vision model (coding, research, review)
+#   vision = multimodal model (browser, screenshots, design)
+# Each can have its own model/api_key/base_url. Vision falls back to text, text
+# falls back to the NVIDIA defaults — so the minimal setup is just
+# NVIDIA_API_KEY, and a single-model setup works by leaving VISION_* empty.
+# Roles select the provider type (roles/<name>/role.conf) and carry operating
+# rules (prompt.md) that are injected into the task.
+BASE_URL="${BASE_URL:-https://integrate.api.nvidia.com/v1}"
+DEFAULT_MODEL="${DEFAULT_MODEL:-z-ai/glm-5.2}"
+NVIDIA_API_KEY="${NVIDIA_API_KEY:-}"
 
-# ---- role resolution ----------------------------------------------------------
-# A role (roles/<name>/role.conf + prompt.md) pins the model and injects the
-# role's operating rules into the task — deterministic capability behavior.
 ROLE_PROMPT=""
+PROVIDER="text"
+ROLE_MODEL=""
 if [[ -n "$ROLE" ]]; then
   ROLE_CONF="$SCRIPT_DIR/roles/$ROLE/role.conf"
   if [[ ! -f "$ROLE_CONF" ]]; then
     echo "ERROR: unknown role '$ROLE' (see roles/ and ROLES.md)" >&2
     exit 3
   fi
+  PROVIDER="$(grep -E '^provider=' "$ROLE_CONF" | head -1 | cut -d= -f2- | tr -d ' "')"
+  [[ -z "$PROVIDER" ]] && PROVIDER="text"
   ROLE_MODEL="$(grep -E '^model=' "$ROLE_CONF" | head -1 | cut -d= -f2- | tr -d ' "')"
-  MODEL="${MODEL:-$ROLE_MODEL}"
   ROLE_PROMPT="$SCRIPT_DIR/roles/$ROLE/prompt.md"
 fi
-MODEL="${MODEL:-z-ai/glm-5.2}"
+
+if [[ "$PROVIDER" == "vision" ]]; then
+  PROVIDER_MODEL="${VISION_MODEL:-${TEXT_MODEL:-}}"
+  PROVIDER_KEY="${VISION_API_KEY:-${TEXT_API_KEY:-}}"
+  PROVIDER_BASE="${VISION_BASE_URL:-${TEXT_BASE_URL:-}}"
+else
+  PROVIDER_MODEL="${TEXT_MODEL:-}"
+  PROVIDER_KEY="${TEXT_API_KEY:-}"
+  PROVIDER_BASE="${TEXT_BASE_URL:-}"
+fi
+
+MODEL="${MODEL:-${PROVIDER_MODEL:-${ROLE_MODEL:-$DEFAULT_MODEL}}}"
+API_KEY="${PROVIDER_KEY:-$NVIDIA_API_KEY}"
+BASE_URL="${PROVIDER_BASE:-$BASE_URL}"
+
+: "${API_KEY:?No API key found. Set NVIDIA_API_KEY, or TEXT_API_KEY/VISION_API_KEY (see .env.example)}"
 
 # ---- sandbox safety ----------------------------------------------------------
 # Docker is the enforced default: agent commands run inside a container, and only
@@ -136,7 +160,8 @@ if openhands --help 2>&1 | grep -q -- '--json'; then
 fi
 
 echo "==> Delegating to openhands (model: ${MODEL})"
-echo "    task: ${TASK_FILE##*/} | dir: ${PWD}"
+echo "    task: ${TASK_FILE##*/} | dir: ${PWD} | provider: ${PROVIDER}"
+echo "    base: ${BASE_URL}"
 echo "    sandbox: ${RUNTIME}${SANDBOX_VOLUMES:+ | volumes: ${SANDBOX_VOLUMES}}"
 
 # Sanitized environment: only what OpenHands needs. No inherited secrets.
@@ -145,8 +170,8 @@ env -i \
   PATH="$PATH" \
   HOME="$HOME" \
   LANG="${LANG:-C.UTF-8}" \
-  NVIDIA_API_KEY="$NVIDIA_API_KEY" \
-  LLM_API_KEY="$NVIDIA_API_KEY" \
+  NVIDIA_API_KEY="$API_KEY" \
+  LLM_API_KEY="$API_KEY" \
   LLM_MODEL="openai/${MODEL}" \
   LLM_BASE_URL="$BASE_URL" \
   RUNTIME="$RUNTIME" \

@@ -19,9 +19,12 @@ if [[ -f .env ]]; then
 fi
 
 # ---- preconditions ---------------------------------------------------------
-: "${NVIDIA_API_KEY:?NVIDIA_API_KEY is required (set it in .env)}"
-DEFAULT_MODEL="${DEFAULT_MODEL:-z-ai/glm-5.2}"
-BASE_URL="https://integrate.api.nvidia.com/v1"
+# Prefer NVIDIA defaults; fall back to the text provider if configured.
+API_KEY="${NVIDIA_API_KEY:-${TEXT_API_KEY:-}}"
+: "${API_KEY:?No API key found. Set NVIDIA_API_KEY or TEXT_API_KEY (see .env.example)}"
+NVIDIA_API_KEY="$API_KEY"
+DEFAULT_MODEL="${DEFAULT_MODEL:-${TEXT_MODEL:-z-ai/glm-5.2}}"
+BASE_URL="${BASE_URL:-https://integrate.api.nvidia.com/v1}"
 RUNTIME="${RUNTIME:-docker}"
 case "$RUNTIME" in
   docker|remote) ;;

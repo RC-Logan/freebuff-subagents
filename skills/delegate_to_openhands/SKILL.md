@@ -22,7 +22,8 @@ parameters:
     role:
       type: string
       description: Capability role (see roles/ and ROLES.md in the repo). The wrapper
-        enforces the role's model and operating rules. Overridable via model.
+        enforces the role's provider (text/vision), model, and operating rules.
+        Overridable via model.
       default: code-editor
       enum: [browser-use, researcher, code-editor, code-reviewer, context-pruner]
     model:
@@ -36,8 +37,9 @@ parameters:
 # Execution
 
 1. For a `role`, pass `-r <role>`: delegate.sh reads `roles/<role>/role.conf`
-   (model) and `prompt.md` (operating rules) and composes the task file
-   automatically. `-m <model>` overrides the role's model. The role's discipline
+   (provider type + default model) and `prompt.md` (operating rules), resolves
+   model/key/base URL from the provider env (`.env`), and composes the task
+   file automatically. `-m <model>` overrides the model. The role's discipline
    is enforced by the wrapper, not by memory.
 2. Write `task_instructions` to a temporary task file (or pass via `-t`).
 3. Run the wrapper from this repo's checkout (never inline-shell the task — quoting

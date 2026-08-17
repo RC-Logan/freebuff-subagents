@@ -10,8 +10,9 @@
 for arg in "$@"; do
   if [[ "$arg" == "--help" ]]; then
     if [[ -f "$HOME/.mock-override" ]]; then
-      echo "--override-with-envs"
-      echo "--json"
+      # single write: grep -q closes the pipe on first match, and separate
+      # echoes race SIGPIPE
+      printf -- '--override-with-envs\n--json\n'
     fi
     exit 0
   fi

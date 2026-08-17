@@ -4,32 +4,53 @@ The Freebuff CLI used to spawn named subagents. This repo restores the same
 *capabilities* — and goes further — as **enforced roles**: each role lives in
 `roles/<name>/` and is applied deterministically by the wrapper:
 
-- `roles/<name>/role.conf` — pins the NIM model and describes the role.
+- `roles/<name>/role.conf` — selects the **provider type** (`text` or
+  `vision`) and a default model.
 - `roles/<name>/prompt.md` — operating rules injected into every delegation
   for that role (the discipline no longer depends on the main model remembering
   to write it).
 
 Invoke with `./bin/delegate.sh -t "<task>" -r <role>` (or via the skill's
-`role` parameter). `-m <model>` overrides the role's pinned model.
+`role` parameter). `-m <model>` overrides the model for that run.
 
-| Role | Model | Capability |
-|---|---|---|
-| `browser-use` | `minimaxai/minimax-m3` | Vision-capable browser: screenshots, design, visual QA. Screenshot-per-step is enforced by the role prompt; screenshots are saved to the working dir and surfaced in the result. |
-| `researcher` | `z-ai/glm-5.2` | Multi-page web research; returns claims with sources (URLs). |
-| `code-editor` | `z-ai/glm-5.2` | Implements changes in a repo, runs typecheck/tests, reports results. |
-| `code-reviewer` | `z-ai/glm-5.2` | Reviews code/diffs; returns severity-ranked findings with file:line refs. No edits. |
-| `context-pruner` | `z-ai/glm-5.2` | Condenses large context into a structured, lossless digest. |
+| Role | Provider | Default model | Capability |
+|---|---|---|---|
+| `browser-use` | vision | `minimaxai/minimax-m3` | Vision-capable browser: screenshots, design, visual QA. Screenshot-per-step is enforced by the role prompt; screenshots are saved to the working dir and surfaced in the result. |
+| `researcher` | text | `z-ai/glm-5.2` | Multi-page web research; returns claims with sources (URLs). |
+| `code-editor` | text | `z-ai/glm-5.2` | Implements changes in a repo, runs typecheck/tests, reports results. |
+| `code-reviewer` | text | `z-ai/glm-5.2` | Reviews code/diffs; returns severity-ranked findings with file:line refs. No edits. |
+| `context-pruner` | text | `z-ai/glm-5.2` | Condenses large context into a structured, lossless digest. |
+
+## Providers — plug in your own API
+
+Two provider types, configured in `.env`:
+
+- **text** — high-reasoning, non-vision model (coding, research, review):
+  `TEXT_MODEL`, `TEXT_API_KEY`, `TEXT_BASE_URL`.
+- **vision** — multimodal model (browser, screenshots, design):
+  `VISION_MODEL`, `VISION_API_KEY`, `VISION_BASE_URL`.
+
+Resolution per delegation: `-m` flag → provider model env → role default →
+`DEFAULT_MODEL`. Keys/base URLs fall back provider → `NVIDIA_API_KEY` /
+`BASE_URL`. **Vision falls back to text, and text falls back to the NVIDIA
+defaults**, so:
+
+- **Minimal NVIDIA setup:** set only `NVIDIA_API_KEY`.
+- **One model for both types** (or a dominant text model): set `TEXT_MODEL`,
+  leave `VISION_*` empty — `browser-use` will use the text provider. This is
+  the expected future shape: a single strong model may serve both roles.
+- **Separate APIs:** set both provider blocks independently.
 
 ## Why this surpasses the old subagent structure
 
 - **Deterministic discipline** — operating rules are enforced by the wrapper
   per role, not recalled by the orchestrator.
-- **Right model per capability** — the vision role runs on a genuinely
-  multimodal model (MiniMax-M3), not a text-first lite model.
+- **Right provider per capability** — the vision role routes to a multimodal
+  provider, and can be repointed to any endpoint without code changes.
 - **One safety envelope** — every role runs through the same Docker-sandboxed,
   sanitized-env wrapper; roles cannot opt out of the safety guarantees.
 - **Configurable and testable** — roles are plain files; the pre-run suite
-  verifies model pinning and prompt injection.
+  verifies provider routing, model pinning, and prompt injection.
 
 ## Adding a role
 
@@ -38,7 +59,8 @@ mkdir roles/my-role
 # roles/my-role/role.conf:
 #   name=my-role
 #   description=...
-#   model=z-ai/glm-5.2
+#   provider=text          # text | vision
+#   model=your-default-model
 # roles/my-role/prompt.md:  (operating rules, injected verbatim)
 ```
 
@@ -46,7 +68,7 @@ The skill's `role` enum should list it too (SKILL.md frontmatter).
 
 ## When NOT to use a role
 
-- Single-shot vision extraction (look at one image) → call NIM directly from
-  Freebuff; don't spawn a full agent session.
+- Single-shot vision extraction (look at one image) → call the vision API
+  directly from Freebuff; don't spawn a full agent session.
 - The main thread can do the task comfortably → do it in-thread; every
-  delegation costs 1+ NIM calls against the ~40 RPM budget.
+  delegation costs API calls against the provider's rate budget.
