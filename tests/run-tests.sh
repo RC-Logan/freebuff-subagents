@@ -161,6 +161,22 @@ RC=$?
 set -e
 check "missing API key rejected" "$RC" "1"
 
+# ---- env loader precedence -----------------------------------------------------
+echo "== env loader: precedence"
+LT="$WORK/lt"; mkdir -p "$LT"
+printf 'PRE_TEST=file-value\nUNSET_TEST=file-only\nEXPAND_TEST=${HOME}/x\n' > "$LT/.env"
+(
+  cd "$LT"
+  export PRE_TEST=env-value
+  # shellcheck disable=SC1091
+  source "$ROOT/lib/env.sh"
+  load_env
+  test "$PRE_TEST" = "env-value" \
+    && test "${UNSET_TEST:-}" = "file-only" \
+    && test "${EXPAND_TEST:-}" = "$HOME/x"
+)
+check 'env loader: env wins, file fills, ${HOME} expands' "$?" "0"
+
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"
 T2="$WORK/t2"; mkdir -p "$T2/home" "$T2/skills" "$T2/curlbody"

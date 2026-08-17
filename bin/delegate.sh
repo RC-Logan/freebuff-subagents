@@ -34,13 +34,10 @@ while getopts "t:f:d:m:r:h" opt; do
   esac
 done
 
-# ---- load .env --------------------------------------------------------------
-if [[ -f .env ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-fi
+# ---- load .env (env vars win over the file; see lib/env.sh) -----------------
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/env.sh"
+load_env
 
 # ---- provider + role resolution ------------------------------------------------
 # Two provider types, pluggable per model:

@@ -36,6 +36,18 @@ defaults — so a single-model setup works (set `TEXT_MODEL`, leave `VISION_*`
 empty), and the minimal NVIDIA setup is just `NVIDIA_API_KEY`. Model is
 resolved per call; `-m` overrides it.
 
+## Configuration: `.env` vs environment variables
+
+Copy `.env.example` → `.env` for persisted per-machine config (gitignored, so
+secrets stay local). Explicitly-set environment variables always **override**
+`.env` — `lib/env.sh` loads only variables that aren't already set — so you
+can override per invocation without editing the file:
+
+```bash
+TEXT_MODEL=my-model ./bin/delegate.sh -r code-editor -t "..."
+VISION_API_KEY=... ./bin/delegate.sh -r browser-use -t "..."
+```
+
 ## Capability roles
 
 The Freebuff CLI used to spawn named subagents. Those *capabilities* are
@@ -80,6 +92,7 @@ Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe loc
 bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping, skill install
 bin/delegate.sh       # sanitized-env headless wrapper (roles, per-call model routing)
 bin/smoke-test.sh     # end-to-end validation
+lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
 skills/delegate_to_openhands/SKILL.md   # the Freebuff skill definition

@@ -9,14 +9,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-# ---- load .env if present -------------------------------------------------
-if [[ -f .env ]]; then
-  echo "==> Loading .env"
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-fi
+# ---- load .env if present (env vars win over the file; see lib/env.sh) -----
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/env.sh"
+load_env
 
 # ---- preconditions ---------------------------------------------------------
 # Prefer NVIDIA defaults; fall back to the text provider if configured.
