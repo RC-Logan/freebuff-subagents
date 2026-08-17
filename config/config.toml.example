@@ -1,0 +1,17 @@
+# V0 (legacy) OpenHands config — only for CLIs that lack --override-with-envs.
+# Modern V1 CLIs use ~/.openhands/agent_settings.json instead (see the .example
+# next to this file). install.sh detects the scheme and writes the right one.
+
+[llm]
+# 'openai/' prefix tells LiteLLM to use OpenAI-compatible routing to NIM
+model = "openai/z-ai/glm-5.2"
+base_url = "https://integrate.api.nvidia.com/v1"
+api_key = "nvapi-REPLACE_ME"
+temperature = 0.1
+max_output_tokens = 4096
+
+[core]
+# Safety bounds for the ~40 RPM NIM budget
+max_iterations = 25
+# docker (default, isolated) | process (no isolation — "unsafe, but fast")
+runtime = "docker"

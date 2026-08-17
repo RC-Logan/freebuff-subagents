@@ -1,0 +1,11 @@
+# Secrets — never commit
+.env
+
+# Runtime artifacts
+*.jsonl
+*.log
+test_nim.py
+/tmp/
+
+# OS noise
+.DS_Store
