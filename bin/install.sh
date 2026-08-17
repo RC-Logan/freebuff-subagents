@@ -7,7 +7,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$(pwd)"   # the project the user ran install from (pre-cd)
 cd "$SCRIPT_DIR"
 
 # ---- load .env if present (env vars win over the file; see lib/env.sh) -----
@@ -111,13 +110,21 @@ EOF
 fi
 echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 
-# ---- install the Freebuff skill (project-local per Codebuff docs) ----------
-FREE_BUFF_SKILLS_DIR="${FREE_BUFF_SKILLS_DIR:-$PROJECT_DIR/.agents/skills}"
-echo "==> Installing skill into ${FREE_BUFF_SKILLS_DIR}"
-mkdir -p "$FREE_BUFF_SKILLS_DIR"
-cp -R .agents/skills/delegate-openhands "$FREE_BUFF_SKILLS_DIR/"
-echo "    project-local .agents/skills per Codebuff docs (highest priority);"
-echo "    override FREE_BUFF_SKILLS_DIR for a global install if you prefer"
+# ---- Freebuff skill (native discovery; no default dir imposed) -------------
+# Freebuff/Codebuff discover skills from <project>/.agents/skills natively — no
+# default is changed or configured here. The skill ships in this repo at
+# .agents/skills/delegate-openhands. FREE_BUFF_SKILLS_DIR is an OPT-IN override
+# to copy it elsewhere; unset means native project discovery.
+if [[ -n "${FREE_BUFF_SKILLS_DIR:-}" ]]; then
+  echo "==> Copying skill into ${FREE_BUFF_SKILLS_DIR} (explicit override)"
+  mkdir -p "$FREE_BUFF_SKILLS_DIR"
+  cp -R .agents/skills/delegate-openhands "$FREE_BUFF_SKILLS_DIR/"
+else
+  echo "==> Skill discovered natively from the project's .agents/skills"
+  echo "    (clone this repo into your project, or copy .agents/skills/delegate-openhands"
+  echo "    into your project's .agents/skills/ — see README. Set FREE_BUFF_SKILLS_DIR"
+  echo "    to opt into copying it elsewhere.)"
+fi
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"
@@ -140,6 +147,6 @@ cat <<'NEXT'
 Setup complete. Next:
   1. Smoke test:  ./bin/smoke-test.sh
   2. Delegate:    ./bin/delegate.sh -t "your task" [-m minimaxai/minimax-m3]
-  3. From Freebuff: invoke the delegate-openhands skill (installed into the
-     project's .agents/skills above; restart Freebuff to reload skills).
+  3. From Freebuff: invoke the delegate-openhands skill (discovered from the
+     project's .agents/skills; restart Freebuff to reload skills).
 NEXT

@@ -85,8 +85,7 @@ it is slow on a fresh machine.
    fails loudly if a key is missing — no install, no API call.
 5. **Install and smoke test:**
    ```bash
-   ./bin/install.sh         # installs openhands-ai, writes config, pings NIM,
-                            # installs the Freebuff skill
+   ./bin/install.sh         # installs openhands-ai, writes config, pings NIM
    ./bin/smoke-test.sh      # one end-to-end delegation (text model)
    ./bin/smoke-test.sh -m minimaxai/minimax-m3   # same task on the vision model
    ```
@@ -102,6 +101,21 @@ Notes for step 3:
 `install.sh` is idempotent and **version-aware**: it detects whether your
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 (`config.toml`) config scheme and writes the right one.
+
+## Skills & discovery
+
+Freebuff/Codebuff discover skills natively from the **project's `.agents/skills`**
+directory (per the Codebuff docs; project skills have highest priority). No
+default skills directory is configured or changed by this repo.
+
+- **Repo at (or as) your project root** → the skill is already at
+  `.agents/skills/delegate-openhands/`; restart Freebuff and it is available.
+- **Repo elsewhere** → copy it in:
+  `cp -R <repo>/.agents/skills/delegate-openhands <project>/.agents/skills/`
+- **Prefer another location?** Set `FREE_BUFF_SKILLS_DIR` in `.env` (opt-in)
+  and `install.sh` will copy the skill there.
+
+Restart Freebuff after installing to reload skills.
 
 ## Day-to-day (after the one-time setup)
 
@@ -193,6 +207,6 @@ docs/WHY.md            # research, concerns, safe-boundary audit
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| Skill doesn't appear in Freebuff | It installs to `<project>/.agents/skills` by default (Codebuff docs). Verify `FREE_BUFF_SKILLS_DIR` and that the name matches the directory (`delegate-openhands`); restart Freebuff to reload skills. |
+| Skill doesn't appear in Freebuff | Skills are discovered from the project's `.agents/skills` (Codebuff docs) — ensure `<project>/.agents/skills/delegate-openhands/SKILL.md` exists and the name matches the directory; restart Freebuff to reload. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

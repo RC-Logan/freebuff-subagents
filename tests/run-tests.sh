@@ -259,7 +259,7 @@ check "invalid RUNTIME rejected by install.sh" "$RC" "1"
 unset RUNTIME
 
 # ===========================================================================
-echo "== install.sh: skill defaults to project .agents/skills"
+echo "== install.sh: no default skills-dir copy when unset"
 T5="$WORK/t5"; mkdir -p "$T5/home" "$T5/project" "$T5/curlbody"
 export HOME="$T5/home"
 export NVIDIA_API_KEY="nvapi-install-test"
@@ -269,8 +269,9 @@ unset FREE_BUFF_SKILLS_DIR OPENHANDS_VERSION
 ( cd "$T5/project" && "$ROOT/bin/install.sh" > "$T5/install.log" 2>&1 )
 RC=$?
 check "install.sh exits 0 from project cwd" "$RC" "0"
-test -f "$T5/project/.agents/skills/delegate-openhands/SKILL.md"; RC=$?
-check "skill defaulted to project .agents/skills" "$RC" "0"
+test ! -e "$T5/project/.agents/skills"; RC=$?
+check "no default copy when FREE_BUFF_SKILLS_DIR unset" "$RC" "0"
+contains "install.sh explains native discovery" "$T5/install.log" "natively"
 
 # ===========================================================================
 echo
