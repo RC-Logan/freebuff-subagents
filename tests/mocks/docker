@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Mock docker for the test suite: `docker info` exits 0 (daemon up) or 1
+# (daemon down) per MOCK_DOCKER_STATUS (default: up).
+if [[ "${MOCK_DOCKER_STATUS:-up}" == "up" ]]; then
+  exit 0
+fi
+exit 1

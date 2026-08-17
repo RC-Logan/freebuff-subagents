@@ -34,6 +34,19 @@ echo "  vision key:   $(mask "$VISION_KEY")"
 echo "  sandbox:      ${RUNTIME}"
 echo "  skills dir:   ${FREE_BUFF_SKILLS_DIR:-(not set)}"
 echo "  openhands:    ${OH:-not installed (run ./bin/install.sh)}"
+if [[ "$RUNTIME" == "docker" ]]; then
+  if command -v docker >/dev/null 2>&1; then
+    if docker info >/dev/null 2>&1; then
+      echo "  docker:       running (daemon up)"
+    else
+      echo "  docker:       installed but daemon NOT running"
+    fi
+  else
+    echo "  docker:       NOT installed (required for the default sandbox)"
+  fi
+else
+  echo "  docker:       not required (RUNTIME=${RUNTIME})"
+fi
 
 if [[ -z "$TEXT_KEY" ]]; then
   echo

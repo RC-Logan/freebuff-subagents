@@ -59,6 +59,11 @@ See [`ROLES.md`](ROLES.md) for the table and how to add roles.
 
 ## First-time setup (reproduce on a new instance)
 
+**Prerequisites:** macOS, an API key, [Docker](#sandboxing--safety) running
+(required for the safe default sandbox), and git + curl (both ship with
+macOS). The first smoke test pulls OpenHands' agent-server Docker image, so
+it is slow on a fresh machine.
+
 1. **Get an API key.** For NVIDIA NIM: sign in at `https://build.nvidia.com`,
    open **API Keys** (Settings → API Keys), and generate a key. (Any other
    OpenAI-compatible provider works too — see Providers below.)

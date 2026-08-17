@@ -34,6 +34,14 @@ case "$RUNTIME" in
     exit 1
     ;;
 esac
+if [[ "$RUNTIME" == "docker" ]] \
+  && { ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; }; then
+  echo
+  echo "WARNING: RUNTIME=docker but Docker is not available (missing or daemon down)." >&2
+  echo "         Delegations will FAIL until Docker runs. Install e.g.:" >&2
+  echo "           brew install --cask orbstack   # or colima, or Docker Desktop" >&2
+  echo "         (Install continues; openhands and config will be set up anyway.)" >&2
+fi
 MAX_ITERATIONS="${MAX_ITERATIONS:-25}"
 
 echo "==> NIM model:  ${DEFAULT_MODEL}"

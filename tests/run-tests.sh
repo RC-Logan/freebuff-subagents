@@ -197,6 +197,14 @@ set -e
 check "check-env fails without key" "$RC" "1"
 unset TEXT_MODEL TEXT_API_KEY TEXT_BASE_URL
 
+export MOCK_DOCKER_STATUS="up"
+"$ROOT/bin/check-env.sh" > "$T/check.log" 2>&1
+containsF "check-env reports docker running" "$T/check.log" "running (daemon up)"
+export MOCK_DOCKER_STATUS="down"
+"$ROOT/bin/check-env.sh" > "$T/check.log" 2>&1
+containsF "check-env reports daemon down" "$T/check.log" "daemon NOT running"
+unset MOCK_DOCKER_STATUS
+
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"
 T2="$WORK/t2"; mkdir -p "$T2/home" "$T2/skills" "$T2/curlbody"
@@ -207,9 +215,12 @@ export FREE_BUFF_SKILLS_DIR="$T2/skills"
 export MOCK_CURL_BODY="$T2/curlbody/body.txt"
 unset OPENHANDS_VERSION
 touch "$HOME/.mock-override"   # simulate V1 CLI
+export MOCK_DOCKER_STATUS="down"
 
 "$ROOT/bin/install.sh" > "$T2/install.log" 2>&1
 check "install.sh exits 0 (V1 path)" "$?" "0"
+contains "install.sh warns when Docker unavailable" "$T2/install.log" "Docker is not available"
+unset MOCK_DOCKER_STATUS
 test -f "$T2/home/.openhands/agent_settings.json"; RC=$?
 check "V1 config file written" "$RC" "0"
 contains "config model has openai/ prefix" "$T2/home/.openhands/agent_settings.json" 'openai/z-ai/glm-5.2'
