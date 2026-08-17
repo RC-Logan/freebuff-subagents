@@ -226,7 +226,7 @@ check "V1 config file written" "$RC" "0"
 contains "config model has openai/ prefix" "$T2/home/.openhands/agent_settings.json" 'openai/z-ai/glm-5.2'
 contains "config base URL" "$T2/home/.openhands/agent_settings.json" 'https://integrate.api.nvidia.com/v1'
 contains "config api key" "$T2/home/.openhands/agent_settings.json" 'nvapi-install-test'
-test -f "$T2/skills/delegate_to_openhands/SKILL.md"; RC=$?
+test -f "$T2/skills/delegate-openhands/SKILL.md"; RC=$?
 check "skill copied to skills dir" "$RC" "0"
 contains "NIM ping uses BARE model id" "$T2/curlbody/body.txt" '"model":"z-ai/glm-5.2"'
 not_contains "NIM ping body has no openai/ prefix" "$T2/curlbody/body.txt" 'openai/'
@@ -257,6 +257,20 @@ RC=$?
 set -e
 check "invalid RUNTIME rejected by install.sh" "$RC" "1"
 unset RUNTIME
+
+# ===========================================================================
+echo "== install.sh: skill defaults to project .agents/skills"
+T5="$WORK/t5"; mkdir -p "$T5/home" "$T5/project" "$T5/curlbody"
+export HOME="$T5/home"
+export NVIDIA_API_KEY="nvapi-install-test"
+export MOCK_CURL_BODY="$T5/curlbody/body.txt"
+unset FREE_BUFF_SKILLS_DIR OPENHANDS_VERSION
+
+( cd "$T5/project" && "$ROOT/bin/install.sh" > "$T5/install.log" 2>&1 )
+RC=$?
+check "install.sh exits 0 from project cwd" "$RC" "0"
+test -f "$T5/project/.agents/skills/delegate-openhands/SKILL.md"; RC=$?
+check "skill defaulted to project .agents/skills" "$RC" "0"
 
 # ===========================================================================
 echo

@@ -7,6 +7,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_DIR="$(pwd)"   # the project the user ran install from (pre-cd)
 cd "$SCRIPT_DIR"
 
 # ---- load .env if present (env vars win over the file; see lib/env.sh) -----
@@ -110,16 +111,13 @@ EOF
 fi
 echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 
-# ---- install the Freebuff skill -------------------------------------------
-if [[ -n "${FREE_BUFF_SKILLS_DIR:-}" ]]; then
-  echo "==> Installing skill into ${FREE_BUFF_SKILLS_DIR}"
-  mkdir -p "$FREE_BUFF_SKILLS_DIR"
-  cp -R skills/delegate_to_openhands "$FREE_BUFF_SKILLS_DIR/"
-  echo "    NOTE: verify this is the real skills dir for your Freebuff install"
-  echo "    (see docs/WHY.md §1c audit item #4)"
-else
-  echo "==> FREE_BUFF_SKILLS_DIR not set — skipping skill install"
-fi
+# ---- install the Freebuff skill (project-local per Codebuff docs) ----------
+FREE_BUFF_SKILLS_DIR="${FREE_BUFF_SKILLS_DIR:-$PROJECT_DIR/.agents/skills}"
+echo "==> Installing skill into ${FREE_BUFF_SKILLS_DIR}"
+mkdir -p "$FREE_BUFF_SKILLS_DIR"
+cp -R .agents/skills/delegate-openhands "$FREE_BUFF_SKILLS_DIR/"
+echo "    project-local .agents/skills per Codebuff docs (highest priority);"
+echo "    override FREE_BUFF_SKILLS_DIR for a global install if you prefer"
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"
@@ -142,5 +140,6 @@ cat <<'NEXT'
 Setup complete. Next:
   1. Smoke test:  ./bin/smoke-test.sh
   2. Delegate:    ./bin/delegate.sh -t "your task" [-m minimaxai/minimax-m3]
-  3. From Freebuff: invoke the delegate_to_openhands skill (verify the skills path above).
+  3. From Freebuff: invoke the delegate-openhands skill (installed into the
+     project's .agents/skills above; restart Freebuff to reload skills).
 NEXT

@@ -128,8 +128,8 @@ copy the skill, ping the API — and re-running it overwrites the config from
 ./bin/delegate.sh -t "Fix the failing test in ./src" -d ./src
 ./bin/delegate.sh -f /tmp/task.md -m minimaxai/minimax-m3 -d ./design
 
-# From Freebuff: invoke the delegate_to_openhands skill
-# (skills/delegate_to_openhands/SKILL.md — installed by install.sh)
+# From Freebuff: invoke the delegate-openhands skill
+# (.agents/skills/delegate-openhands/SKILL.md — installed by install.sh)
 ```
 
 Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe local config (e.g. `RUNTIME=process` without opt-in).
@@ -144,7 +144,7 @@ bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
-skills/delegate_to_openhands/SKILL.md   # the Freebuff skill definition
+.agents/skills/delegate-openhands/SKILL.md   # the Freebuff skill (project-local, per Codebuff docs)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md            # research, concerns, safe-boundary audit
@@ -193,6 +193,6 @@ docs/WHY.md            # research, concerns, safe-boundary audit
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| Skill doesn't appear in Freebuff | The skills path is wrong for your install — verify `FREE_BUFF_SKILLS_DIR` (audit §1c #4). |
+| Skill doesn't appear in Freebuff | It installs to `<project>/.agents/skills` by default (Codebuff docs). Verify `FREE_BUFF_SKILLS_DIR` and that the name matches the directory (`delegate-openhands`); restart Freebuff to reload skills. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

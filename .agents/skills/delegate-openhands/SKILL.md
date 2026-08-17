@@ -1,5 +1,5 @@
 ---
-name: delegate_to_openhands
+name: delegate-openhands
 description: Dispatches complex multi-step coding, debugging, file-editing, terminal,
   or browser/design tasks to an autonomous OpenHands subagent running against NVIDIA
   NIM. Provides the former Freebuff subagent capabilities (browser-use, researcher,
