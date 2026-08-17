@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
-# Generate the project-local MCP registration file that Freebuff/Codebuff
-# loads natively (`.agents/mcp.json`; see docs/WHY.md and DECISIONS.md #19).
+# Generate the MCP registration file Freebuff loads natively (mcp.json with
+# an mcpServers map; see docs/WHY.md and DECISIONS.md #19).
+#
+# The Freebuff/Codebuff loader (verified present in the shipped 0.0.149
+# binary) searches these paths, later paths winning on name collisions:
+#   {cwd}/.agents/mcp.json
+#   {cwd}/../.agents/mcp.json
+#   {homedir}/.agents/mcp.json     (global — any project)
 #
 # Usage: ./bin/register-mcp.sh [target-dir]
-#   Writes <target-dir>/.agents/mcp.json (default: this repo's root).
+#   Writes <target-dir>/.agents/mcp.json. Default target: the current
+#   directory ($PWD) — so run it from the directory you launch Freebuff in.
+#   Use "$HOME" for a global registration that works in every project.
 #   Idempotent — re-running regenerates the file.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXAMPLE="$SCRIPT_DIR/.agents/mcp.json.example"
-TARGET="${1:-$SCRIPT_DIR}"
+TARGET="${1:-$PWD}"
 OUT="$TARGET/.agents/mcp.json"
 
 [[ -f "$EXAMPLE" ]] || { echo "ERROR: missing $EXAMPLE" >&2; exit 1; }
@@ -31,7 +39,8 @@ echo "==> wrote $OUT"
 echo "    server: python3 $SCRIPT_DIR/bin/mcp-server.py"
 echo
 echo "Next:"
-echo "  1. Restart Freebuff so it loads the new MCP server."
+echo "  1. Restart Freebuff (it logs 'Loaded MCP servers from mcp.json' at"
+echo "     startup when it finds the file)."
 echo "  2. Ask for the tool by name: 'delegate-openhands/delegate'."
-echo "  3. If the tool does not appear, the installed client may not expose"
-echo "     MCP yet (support is version-dependent) — see docs/WHY.md."
+echo "  3. Fallback if the tool is ever unavailable: the skill lives in git"
+echo "     history at tag skill-fallback (see README)."

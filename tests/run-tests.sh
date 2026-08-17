@@ -314,6 +314,12 @@ not_contains "no placeholder remains" "$TRM/.agents/mcp.json" "__REPO_ROOT__"
 python3 -m json.tool "$TRM/.agents/mcp.json" > /dev/null 2>&1; RC=$?
 check "registration file is valid JSON" "$RC" "0"
 
+TRM2="$WORK/trm2"; mkdir -p "$TRM2"
+( cd "$TRM2" && "$ROOT/bin/register-mcp.sh" > reg2.log 2>&1 )
+check "register-mcp defaults to PWD" "$?" "0"
+test -f "$TRM2/.agents/mcp.json"; RC=$?
+check "default target writes \$PWD/.agents/mcp.json" "$RC" "0"
+
 # ===========================================================================
 echo
 echo "== results: ${PASS} passed, ${FAIL} failed"

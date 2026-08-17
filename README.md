@@ -116,18 +116,26 @@ JSON out — which is strictly stronger than a prose skill. The server is
 `bin/mcp-server.py` (zero-dependency stdio JSON-RPC, Python stdlib only),
 wrapping `delegate.sh`, so every safety guarantee carries over.
 
-**Register it** — project-local, per the Freebuff/Codebuff loader, which
-searches `{cwd}/.agents/mcp.json`, then `{cwd}/../.agents/mcp.json`, then
-`{homedir}/.agents/mcp.json`:
+**Register it.** Freebuff loads `mcp.json` (standard `mcpServers` shape)
+from `.agents/` near where it runs: `{cwd}/.agents/mcp.json`, then
+`{cwd}/../.agents/mcp.json`, then `~/.agents/mcp.json` (later paths win on
+name collisions). Generate the file with:
 
 ```bash
-./bin/register-mcp.sh        # writes .agents/mcp.json with this repo's path
+./bin/register-mcp.sh                  # writes $PWD/.agents/mcp.json
+./bin/register-mcp.sh /path/to/project # or a specific project root
+./bin/register-mcp.sh "$HOME"          # global: ~/.agents/mcp.json, any project
 ```
 
-Then **restart Freebuff** and ask for the tool by name:
-`delegate-openhands/delegate`. If the tool doesn't appear, the installed
-client may not expose MCP yet — support is version-dependent in the shipped
-binaries even though the source loader is active.
+Run it from the directory you launch Freebuff in (or pass that path); use
+`"$HOME"` for a global registration that works in every project. Then
+**restart Freebuff** — it logs `Loaded MCP servers from mcp.json` at startup
+when it finds the file — and ask for the tool by name:
+`delegate-openhands/delegate`.
+
+MCP support is native and **verified in the installed client** (0.0.149):
+its own browser-use agent ships an MCP server config, and the loader code is
+present in the shipped binary.
 
 **Fallback:** the skill is preserved in git history at tag `skill-fallback`
 (the first push). Restore it with:

@@ -180,9 +180,12 @@ Registration is project-local, per the Freebuff/Codebuff source loader:
 `{cwd}/.agents/mcp.json`, `{cwd}/../.agents/mcp.json`, `{homedir}/.agents/
 mcp.json`. `bin/register-mcp.sh` generates the file with this repo's
 absolute path; the tool is invoked as `delegate-openhands/delegate`.
-Caveat: MCP support is version-dependent in the shipped binaries — the
-source loader is active, but the installed client must expose it
-(verification is the first open item).
+Verification: the installed client (freebuff 0.0.149) natively supports MCP
+— its own browser-use agent ships an MCP server config, and the loader code
+(`mcp.json` under `{cwd}/.agents`, `{cwd}/../.agents`, `~/.agents`) is
+present in the shipped binary. Registered in both the session project root
+and `~/.agents`; the open item is confirming the tool loads after a client
+restart.
 
 ---
 
@@ -191,8 +194,8 @@ source loader is active, but the installed client must expose it
 - Repo published: **`github.com/RC-Logan/freebuff-subagents`** (private).
 - Self-tested: **61/61 assertions green** in `tests/run-tests.sh` (macOS 27).
 - The Freebuff skill was removed from the tree (fallback in git history);
-  the MCP delegate tool is built (decision 19); Freebuff loading it is
-  the remaining verification.
+  the MCP delegate tool is built and registered (decision 19); a client
+  restart is the remaining verification.
 - Git history purged of the sensitive research notes and related analysis
   (decision 18) — the repo is now safe to make public.
 - **Not yet live:** no API key in `.env`, no Docker installed, no real NIM
@@ -200,8 +203,10 @@ source loader is active, but the installed client must expose it
 
 ## Open items
 
-- [ ] Verify the installed Freebuff client loads `.agents/mcp.json` and
-      exposes `delegate-openhands/delegate` (restart, then ask for the tool).
+- [ ] After the next Freebuff restart, confirm the log line
+      "Loaded MCP servers from mcp.json" and that
+      `delegate-openhands/delegate` is invocable (registration files are
+      already in place).
 - [ ] If the MCP route fails: restore the skill from git history and re-add
       the install hooks.
 - [ ] Set `NVIDIA_API_KEY` in `.env` and run `./bin/check-env.sh`.
