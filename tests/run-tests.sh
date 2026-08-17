@@ -40,6 +40,9 @@ contains() { # contains <desc> <file> <needle>
 not_contains() { # not_contains <desc> <file> <forbidden>
   if grep -q -- "$3" "$2"; then bad "$1 (found forbidden '$3' in $2)"; else ok "$1"; fi
 }
+containsF() { # containsF <desc> <file> <needle> — fixed string, no regex metachars
+  if grep -Fq -- "$3" "$2"; then ok "$1"; else bad "$1 (missing '$3' in $2)"; fi
+}
 
 export PATH="$MOCKS:$PATH"
 
@@ -176,6 +179,23 @@ printf 'PRE_TEST=file-value\nUNSET_TEST=file-only\nEXPAND_TEST=${HOME}/x\n' > "$
     && test "${EXPAND_TEST:-}" = "$HOME/x"
 )
 check 'env loader: env wins, file fills, ${HOME} expands' "$?" "0"
+
+# ---- check-env.sh -------------------------------------------------------------
+echo "== check-env.sh: dry-run resolution"
+export TEXT_MODEL="my-text"
+export TEXT_API_KEY="key1234567890"
+export TEXT_BASE_URL="https://text.example/v1"
+"$ROOT/bin/check-env.sh" > "$T/check.log" 2>&1
+check "check-env exits 0 with key" "$?" "0"
+contains "check-env shows text model" "$T/check.log" "my-text"
+containsF "check-env masks key" "$T/check.log" "key1****7890"
+set +e
+env -u NVIDIA_API_KEY -u TEXT_API_KEY -u VISION_API_KEY \
+  "$ROOT/bin/check-env.sh" > /dev/null 2>&1
+RC=$?
+set -e
+check "check-env fails without key" "$RC" "1"
+unset TEXT_MODEL TEXT_API_KEY TEXT_BASE_URL
 
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"

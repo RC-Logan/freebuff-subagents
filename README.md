@@ -57,17 +57,42 @@ pins its NIM model (`role.conf`) and carries its own operating rules
 the role; every role runs through the same sandboxed, sanitized wrapper.
 See [`ROLES.md`](ROLES.md) for the table and how to add roles.
 
-## Quickstart (reproduce on a new instance)
+## First-time setup (reproduce on a new instance)
 
-```bash
-git clone <this-repo> && cd openhands-nim-delegation
-
-cp .env.example .env        # then edit: NVIDIA_API_KEY, model IDs, skills dir
-./bin/install.sh            # installs openhands-ai, writes config, pings NIM,
+1. **Get an API key.** For NVIDIA NIM: sign in at `https://build.nvidia.com`,
+   open **API Keys** (Settings → API Keys), and generate a key. (Any other
+   OpenAI-compatible provider works too — see Providers below.)
+2. **Create `.env` from the template:**
+   ```bash
+   git clone <this-repo> && cd openhands-nim-delegation
+   cp .env.example .env
+   ```
+3. **Set the minimum** — everything else is optional:
+   ```bash
+   NVIDIA_API_KEY=nvapi-YOUR-KEY-HERE
+   ```
+   `.env` is gitignored, so your key is never committed.
+4. **Verify your setup without doing anything:**
+   ```bash
+   ./bin/check-env.sh
+   ```
+   It prints the resolved models, base URLs, masked keys, and sandbox, and
+   fails loudly if a key is missing — no install, no API call.
+5. **Install and smoke test:**
+   ```bash
+   ./bin/install.sh         # installs openhands-ai, writes config, pings NIM,
                             # installs the Freebuff skill
-./bin/smoke-test.sh         # one end-to-end delegation (text model)
-./bin/smoke-test.sh -m minimaxai/minimax-m3   # same task on the vision model
-```
+   ./bin/smoke-test.sh      # one end-to-end delegation (text model)
+   ./bin/smoke-test.sh -m minimaxai/minimax-m3   # same task on the vision model
+   ```
+
+Notes for step 3:
+- Model IDs in `.env` are **bare** (`z-ai/glm-5.2`); the `openai/` prefix is
+  added automatically for OpenHands — never put it in `.env`.
+- **Your own API?** Set `TEXT_MODEL`, `TEXT_API_KEY`, `TEXT_BASE_URL` (and
+  `VISION_*` for the vision provider) instead — see Providers & ROLES.md.
+- **One model for both provider types?** Set only `TEXT_MODEL` and leave
+  `VISION_*` empty — vision falls back to text.
 
 `install.sh` is idempotent and **version-aware**: it detects whether your
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
@@ -90,6 +115,7 @@ Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe loc
 
 ```
 bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping, skill install
+bin/check-env.sh      # dry-run: prints resolved config, no side effects
 bin/delegate.sh       # sanitized-env headless wrapper (roles, per-call model routing)
 bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
