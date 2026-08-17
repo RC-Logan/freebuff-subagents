@@ -9,8 +9,15 @@ inherited unchanged.
 Registration is project-local, per the Freebuff/Codebuff source loader:
 `.agents/mcp.json` -> {"mcpServers": {"delegate-openhands": {"command":
 "python3", "args": ["<repo>/bin/mcp-server.py"], "env": {}}}}. Generate it
-with `./bin/register-mcp.sh`, restart Freebuff, and invoke the tool as
+with `./bin/register-mcp.sh`, restart the client, and invoke the tool as
 `delegate-openhands/delegate`.
+
+Client support: the installed desktop client (0.0.63 at last check) does not
+implement the Codebuff `.agents/mcp.json` loader at runtime (DECISIONS.md
+#20) — register with `./bin/register-mcp.sh`, which writes the project
+`.mcp.json` / `~/.claude.json` entries the client's Claude-Code runtime
+reads. `.agents/mcp.json` is still written for clients that implement that
+loader, and `bin/delegate.sh` from the terminal always works.
 
 Tested on macOS 27 only.
 """

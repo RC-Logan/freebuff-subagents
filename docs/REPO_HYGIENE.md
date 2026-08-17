@@ -35,7 +35,7 @@ they are enforced by the pre-run test suite.
 
 ## Before committing
 
-- Run `./tests/run-tests.sh` — the suite must pass (65 assertions, macOS 27).
+- Run `./tests/run-tests.sh` — the suite must pass (89 assertions, macOS 27).
 - Verify your own work: re-read the diff, re-run what you changed.
 - If something cannot be verified, say so in the commit message or report —
   never claim verification you did not perform.

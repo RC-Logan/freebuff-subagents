@@ -110,14 +110,15 @@ EOF
 fi
 echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 
-# ---- Freebuff skill: removed (MCP route; fallback in git history) ----------
-# The skill was intentionally removed from the tree (DECISIONS.md #16): the
-# integrated Freebuff path is an MCP server (planned). If that route fails,
-# restore the skill from git history — it is preserved at tag skill-fallback.
-echo "==> Skill: removed — the MCP server is the integration path (see DECISIONS.md #19)"
-echo "    fallback: preserved in git history at tag skill-fallback"
-echo "    (git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md)"
-echo "    register with Freebuff: ./bin/register-mcp.sh  (writes .agents/mcp.json)"
+# ---- Freebuff integration: MCP server (no skill) ---------------------------
+# The integrated Freebuff path is an MCP server (bin/mcp-server.py) exposing
+# the delegate tool (DECISIONS.md #19). The old skill variant was removed and
+# lives in git history at tag skill-fallback; it is not used. Registration is
+# ./bin/register-mcp.sh, which writes the project .mcp.json / ~/.claude.json
+# entries the installed client reads, plus .agents/mcp.json for clients that
+# implement the Codebuff loader (DECISIONS.md #20).
+echo "==> Freebuff: MCP server (bin/mcp-server.py) — register with ./bin/register-mcp.sh"
+echo "    (the old skill variant lives in git history at tag skill-fallback; not used)"
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"
@@ -140,6 +141,7 @@ cat <<'NEXT'
 Setup complete. Next:
   1. Smoke test:  ./bin/smoke-test.sh
   2. Delegate:    ./bin/delegate.sh -t "your task" [-m minimaxai/minimax-m3]
-  3. From Freebuff: ./bin/register-mcp.sh, restart Freebuff, then invoke the
-     'delegate-openhands/delegate' tool (see README, Freebuff integration).
+  3. From Freebuff: ./bin/register-mcp.sh, restart Freebuff (or start a new
+     session), then invoke the 'delegate-openhands/delegate' MCP tool (see
+     README, Freebuff integration).
 NEXT

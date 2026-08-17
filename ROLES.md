@@ -74,7 +74,7 @@ mkdir roles/my-role
 
 The shared baseline is added automatically; you only write the role-specific
 rules. (Previously roles were also exposed through a Freebuff skill — that
-skill was removed in favor of an MCP server exposing the delegate tool (see DECISIONS.md #19); register it with ./bin/register-mcp.sh.)
+skill was removed in favor of an MCP server exposing the delegate tool (see DECISIONS.md #19); register it with ./bin/register-mcp.sh, which writes the project `.mcp.json` / `~/.claude.json` entries the installed client reads.)
 
 ## When NOT to use a role
 

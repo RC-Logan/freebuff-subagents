@@ -107,44 +107,42 @@ Notes for step 3:
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 (`config.toml`) config scheme and writes the right one.
 
-## Freebuff integration (MCP)
 
-The Freebuff skill that originally shipped with this repo was **intentionally
-removed** (2026-08-16): the integrated path is an **MCP server** exposing the
-`delegate` tool — typed `task` + `role` + `working_directory` in, structured
-JSON out — which is strictly stronger than a prose skill. The server is
-`bin/mcp-server.py` (zero-dependency stdio JSON-RPC, Python stdlib only),
-wrapping `delegate.sh`, so every safety guarantee carries over.
 
-**Register it.** Freebuff loads `mcp.json` (standard `mcpServers` shape)
-from `.agents/` near where it runs: `{cwd}/.agents/mcp.json`, then
-`{cwd}/../.agents/mcp.json`, then `~/.agents/mcp.json` (later paths win on
-name collisions). Generate the file with:
+## Freebuff integration
 
-```bash
-./bin/register-mcp.sh                  # writes $PWD/.agents/mcp.json
-./bin/register-mcp.sh /path/to/project # or a specific project root
-./bin/register-mcp.sh "$HOME"          # global: ~/.agents/mcp.json, any project
-```
+The integrated path is a **`delegate` tool**: an **MCP server** (`bin/mcp-server.py`,
+zero-dependency stdio JSON-RPC, Python stdlib only) wrapping `delegate.sh` —
+typed `task` + `role` + `working_directory` in, structured JSON out, every
+safety guarantee inherited. The server is fully functional and was verified
+end-to-end over the protocol (initialize, tools/list, tools/call, ping).
 
-Run it from the directory you launch Freebuff in (or pass that path); use
-`"$HOME"` for a global registration that works in every project. Then
-**restart Freebuff** — it logs `Loaded MCP servers from mcp.json` at startup
-when it finds the file — and ask for the tool by name:
-`delegate-openhands/delegate`.
-
-MCP support is native and **verified in the installed client** (0.0.149):
-its own browser-use agent ships an MCP server config, and the loader code is
-present in the shipped binary.
-
-**Fallback:** the skill is preserved in git history at tag `skill-fallback`
-(the first push). Restore it with:
+**It is an MCP server, not a skill.** The desktop app (0.0.63 at last
+check) does **not** call the Codebuff `.agents/mcp.json` loader — that
+loader is implemented in the `freebuff` CLI (0.0.149, the version earlier
+notes misattributed to the desktop app), so the file is read in CLI sessions
+but not desktop ones (DECISIONS.md #20). The desktop runtime *does* read the Claude-Code-standard
+MCP config (it spawns Claude Code subprocesses with strictMcpConfig off):
+project **`.mcp.json`** and **`~/.claude.json` `mcpServers`**.
+`register-mcp.sh` writes both, plus `.agents/mcp.json` for CLI sessions and
+other clients that implement the Codebuff loader:
 
 ```bash
-git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md > SKILL.md
-# or restore the whole tree:
-git checkout skill-fallback -- .agents/skills/delegate-openhands
+./bin/register-mcp.sh                  # project-local: ./.mcp.json + ./.agents/mcp.json
+./bin/register-mcp.sh /path/to/project # at a specific project root
+./bin/register-mcp.sh --global         # merge into ~/.claude.json + ~/.agents/mcp.json
+./bin/register-mcp.sh "$HOME"          # same as --global
 ```
+
+Then **restart Freebuff** (or start a new session in the registered project)
+and ask for the tool by name: `delegate-openhands/delegate`.
+
+**Terminal:** `./bin/delegate.sh -r <role> -t "..."` — always works, no
+client needed.
+
+**History:** a Freebuff *skill* variant shipped with the first push; it was
+removed in favor of this MCP server and survives in git history at tag
+`skill-fallback` (`git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md`).
 
 ## Day-to-day (after the one-time setup)
 
@@ -239,6 +237,6 @@ docs/REPO_HYGIENE.md                    # standards for agents working on this r
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| MCP tool not appearing in Freebuff | Restart Freebuff after `./bin/register-mcp.sh`; if it still won't load, the installed client may not expose MCP yet (version-dependent). Delegate from the terminal via `./bin/delegate.sh` meanwhile; the skill fallback lives at tag `skill-fallback`. |
+| MCP tool not appearing in Freebuff | The installed desktop client reads the Claude-Code-standard config, not `.agents/mcp.json` (DECISIONS.md #20): register with `./bin/register-mcp.sh` (project `.mcp.json` or `--global` for `~/.claude.json`), then restart Freebuff / start a new session. `./bin/delegate.sh` from the terminal always works. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

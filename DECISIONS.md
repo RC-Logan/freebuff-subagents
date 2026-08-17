@@ -175,40 +175,93 @@ server (`bin/mcp-server.py`, Python 3 stdlib only) exposing one `delegate`
 tool (`task_instructions` required; optional `role`, `working_directory`,
 `model`) that wraps `bin/delegate.sh` — all safety (Docker sandbox
 enforcement, sanitized environment, role routing, exit codes) is inherited.
-Registration is project-local, per the Freebuff/Codebuff source loader:
-`.agents/mcp.json` (standard `mcpServers` shape), searched at
-`{cwd}/.agents/mcp.json`, `{cwd}/../.agents/mcp.json`, `{homedir}/.agents/
-mcp.json`. `bin/register-mcp.sh` generates the file with this repo's
-absolute path; the tool is invoked as `delegate-openhands/delegate`.
-Verification: the installed client (freebuff 0.0.149) natively supports MCP
-— its own browser-use agent ships an MCP server config, and the loader code
-(`mcp.json` under `{cwd}/.agents`, `{cwd}/../.agents`, `~/.agents`) is
-present in the shipped binary. Registered in both the session project root
-and `~/.agents`; the open item is confirming the tool loads after a client
-restart.
+Registration: `bin/register-mcp.sh` writes the project `.mcp.json` and
+`~/.claude.json` entries the installed client reads, plus `.agents/mcp.json`
+(standard `mcpServers` shape, absolute server path) for clients that
+implement the Codebuff loader; the tool is invoked as
+`delegate-openhands/delegate`. Verification: registration files were
+generated in the session project root and `~/.agents`, and the server
+passes the full stdio JSON-RPC handshake (initialize, tools/list,
+tools/call validation, ping) with a clean exit. Whether a given client
+loads a given file is client-dependent — see decision 20.
+
+### 20. Client restart check — `.agents/mcp.json` loader is CLI-only, not desktop; Claude-Code MCP config IS supported in desktop (RE-CHECKED 2026-08-17)
+After a client restart, the MCP tool did NOT load from `.agents/mcp.json`:
+no `mcp-server.py` process under the app, no startup log line, no
+`delegate-openhands/delegate` tool surfaced. Root cause, re-verified against
+the installed desktop app (0.0.63 — note the earlier "0.0.149" number was
+the `freebuff` CLI, not the desktop app): the desktop runtime bundles have
+**no implementation of the `.agents/mcp.json` loader**. The loader
+(`loadMCPConfig` in `@codebuff/sdk/src/agents/load-mcp-config.ts`) exists in
+the bundled SDK source inside `app.asar` but is **never called by the
+orchestrator runtime** (zero references to `loadMCPConfig` /
+`load-mcp-config` in `orchestrator.js`); there is no `agentsDir`, no
+`projectAgentsDir`, and no "Loaded MCP servers from mcp.json" log line
+anywhere in the runtime — the earlier "verified in the shipped binary" claim
+was a false positive.
+
+**Correction (2026-08-17): the loader is real — it lives in the `freebuff`
+CLI, not the desktop app.** Extracted from `~/.config/manicode/freebuff`
+(the 90 MB standalone CLI binary): `ZBA()` reads `mcp.json` from
+`{cwd}/.agents`, `{cwd}/../.agents`, `{homedir}/.agents` (exactly the
+search paths originally documented), parses it against an `mcpServers`
+schema (stdio command/args/env or http/sse url/params/headers), resolves
+`$VAR` env references from the process environment (erroring on missing
+vars), and records the source file path. `J8T()` logs "[agents] Loaded MCP
+servers from mcp.json" (debug) / "Failed to load MCP config from .agents
+directories" (warn), and `kC()` merges the servers into every base agent's
+`mcpServers`; tools are fetched per server via `requestMcpToolData` and
+surface as `serverName__toolName`. So `.agents/mcp.json` works in CLI
+sessions but not desktop sessions.
+
+What the client DOES support at runtime (verified in the 0.0.63 bundle):
+- **MCP servers via the Claude-Code-standard config.** The orchestrator
+  spawns Claude Code subprocesses (`spawnClaudeCodeProcess`), manages
+  `CLAUDE_CONFIG_DIR`, and runs sessions with `strictMcpConfig: false` and
+  an empty `mcpServers` option — i.e. the standard Claude Code config
+  loading is active: project **`.mcp.json`** (read from the session working
+  directory) and **`~/.claude.json` `mcpServers`** (global). Tools surface
+  as `mcpName__toolName`. This is the live registration path on the
+  installed client.
+- **Skills are natively loaded from disk** — `{projectRoot}/.agents/skills/`,
+  `{projectRoot}/.claude/skills/`, plus home-level equivalents; a
+  `SKILL.md` with frontmatter is loaded by name via the `skill` tool
+  (`loadSkillFromDisk(projectRoot, name)`). Skills work, but they are not
+  the integration: the delegate is an MCP server.
+
+Decision: the integration remains the **MCP server**. `register-mcp.sh` now
+writes the paths the installed client reads (project `.mcp.json` and, with
+`--global`, `~/.claude.json` `mcpServers`), keeping `.agents/mcp.json` as a
+compatibility file for clients that implement the Codebuff loader. The skill
+variant stays out of the tree (decision 16), preserved in git history at tag
+`skill-fallback` for reference only.
 
 ---
 
-## Current status (2026-08-16)
+## Current status (2026-08-17)
 
 - Repo published: **`github.com/RC-Logan/freebuff-subagents`** (private).
-- Self-tested: **61/61 assertions green** in `tests/run-tests.sh` (macOS 27).
-- The Freebuff skill was removed from the tree (fallback in git history);
-  the MCP delegate tool is built and registered (decision 19); a client
-  restart is the remaining verification.
+- Self-tested: **89/89 assertions green** in `tests/run-tests.sh`.
+- The Freebuff skill was removed from the tree (decision 16); the MCP
+  delegate tool is built (decision 19) and is the integration path —
+  `register-mcp.sh` writes the config the installed client reads (project
+  `.mcp.json`, `~/.claude.json`; decision 20 re-checked 2026-08-17), and
+  `delegate.sh` works from the terminal regardless.
 - Git history purged of the sensitive research notes and related analysis
   (decision 18) — the repo is now safe to make public.
-- **Not yet live:** no API key in `.env`, no Docker installed, no real NIM
-  call, no smoke test run.
+- **Live smoke test:** pending — requires an API key and Docker on the
+  tester's machine (see README "First-time setup"). The MCP plumbing is
+  verified in the installed client binaries; the first real delegation run
+  is the acceptance test.
 
 ## Open items
 
-- [ ] After the next Freebuff restart, confirm the log line
-      "Loaded MCP servers from mcp.json" and that
-      `delegate-openhands/delegate` is invocable (registration files are
-      already in place).
-- [ ] If the MCP route fails: restore the skill from git history and re-add
-      the install hooks.
+- [ ] Confirm `delegate-openhands/delegate` surfaces after a client restart
+      with the project `.mcp.json` registration (decision 20 re-check
+      registered it at the supported Claude-Code path; runtime confirm
+      pending a restart on the real client).
+- [ ] Confirm the `--global` `~/.claude.json` registration in a fresh
+      project (and that the merge preserved any pre-existing entries).
 - [ ] Set `NVIDIA_API_KEY` in `.env` and run `./bin/check-env.sh`.
 - [ ] Install Docker (OrbStack recommended) and run `./bin/install.sh`.
 - [ ] Run `./bin/smoke-test.sh` on both models; add a vision smoke test

@@ -32,11 +32,17 @@ echo "  vision model: ${VISION_MODEL:-${TEXT_MODEL:-$DEFAULT_MODEL}}"
 echo "  vision base:  ${VISION_BASE_URL:-${TEXT_BASE_URL:-$BASE_URL}}"
 echo "  vision key:   $(mask "$VISION_KEY")"
 echo "  sandbox:      ${RUNTIME}"
-echo "  skill:        removed (fallback in git history at tag skill-fallback)"
-if [[ -f "$SCRIPT_DIR/.agents/mcp.json" ]]; then
-  echo "  mcp:          registered (.agents/mcp.json) — Freebuff should expose delegate-openhands/delegate"
+echo "  skill:        none — the integration is an MCP server (see DECISIONS.md #16)"
+if [[ -f "$SCRIPT_DIR/.mcp.json" ]]; then
+  echo "  mcp (proj):   registered ($SCRIPT_DIR/.mcp.json — read by the installed client)"
 else
-  echo "  mcp:          not registered (run ./bin/register-mcp.sh)"
+  echo "  mcp (proj):   not registered (run ./bin/register-mcp.sh)"
+fi
+if [[ -f "$HOME/.claude.json" ]] && grep -q "delegate-openhands" "$HOME/.claude.json"; then
+  echo "  mcp (global): registered in $HOME/.claude.json (every project)"
+fi
+if [[ -f "$SCRIPT_DIR/.agents/mcp.json" ]]; then
+  echo "  mcp (agents): registered (.agents/mcp.json — clients implementing the Codebuff loader)"
 fi
 echo "  openhands:    ${OH:-not installed (run ./bin/install.sh)}"
 if [[ "$RUNTIME" == "docker" ]]; then

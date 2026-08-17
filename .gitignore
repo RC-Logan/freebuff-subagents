@@ -8,6 +8,7 @@ test_nim.py
 /tmp/
 .oh-marker
 .agents/mcp.json
+.mcp.json
 
 # OS noise
 .DS_Store

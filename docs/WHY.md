@@ -37,10 +37,12 @@ guarantee the right operating discipline per task.
 - **Safety:** every delegation runs in a Docker sandbox with a sanitized
   environment; `RUNTIME=process` (no isolation) is refused without an
   explicit opt-in.
-- **Freebuff integration:** an MCP server exposing the `delegate` tool is
-  built and registered project-locally via `./bin/register-mcp.sh` (see
-  [`DECISIONS.md`](../DECISIONS.md) #19); invoke it as
-  `delegate-openhands/delegate`. Until your installed client loads it,
-  delegate from the terminal.
+- **Freebuff integration:** an MCP server exposing the `delegate` tool,
+  registered via `./bin/register-mcp.sh` (see [`DECISIONS.md`](../DECISIONS.md)
+  #19–20); invoke it as `delegate-openhands/delegate`. The installed
+  desktop client reads the Claude-Code-standard config the script writes
+  (project `.mcp.json`, `~/.claude.json`); `.agents/mcp.json` is written
+  for clients that implement the Codebuff loader. `./bin/delegate.sh` from
+  the terminal always works.
 - **Quality:** standards for agents working on this repo:
   [`REPO_HYGIENE.md`](REPO_HYGIENE.md).

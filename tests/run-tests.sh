@@ -225,8 +225,8 @@ check "V1 config file written" "$RC" "0"
 contains "config model has openai/ prefix" "$T2/home/.openhands/agent_settings.json" 'openai/z-ai/glm-5.2'
 contains "config base URL" "$T2/home/.openhands/agent_settings.json" 'https://integrate.api.nvidia.com/v1'
 contains "config api key" "$T2/home/.openhands/agent_settings.json" 'nvapi-install-test'
-contains "install.sh notes the skill removal" "$T2/install.log" "MCP server"
-contains "install.sh names the fallback tag" "$T2/install.log" "skill-fallback"
+contains "install.sh notes the MCP integration" "$T2/install.log" "MCP server"
+contains "install.sh notes the skill is historical" "$T2/install.log" "skill-fallback"
 contains "NIM ping uses BARE model id" "$T2/curlbody/body.txt" '"model":"z-ai/glm-5.2"'
 not_contains "NIM ping body has no openai/ prefix" "$T2/curlbody/body.txt" 'openai/'
 
@@ -270,7 +270,7 @@ RC=$?
 check "install.sh exits 0 from project cwd" "$RC" "0"
 test ! -e "$T5/project/.agents/skills"; RC=$?
 check "no skills copy happens (feature removed)" "$RC" "0"
-contains "install.sh still notes the fallback" "$T5/install.log" "git history"
+contains "install.sh notes the skill is history-only" "$T5/install.log" "git history"
 
 # ===========================================================================
 echo "== mcp-server.py: stdio JSON-RPC protocol (mocked delegation)"
@@ -313,12 +313,46 @@ containsF "registration has absolute server path" "$TRM/.agents/mcp.json" "$ROOT
 not_contains "no placeholder remains" "$TRM/.agents/mcp.json" "__REPO_ROOT__"
 python3 -m json.tool "$TRM/.agents/mcp.json" > /dev/null 2>&1; RC=$?
 check "registration file is valid JSON" "$RC" "0"
+test -f "$TRM/.mcp.json"; RC=$?
+check ".mcp.json written (Claude-Code path the installed client reads)" "$RC" "0"
+containsF ".mcp.json has absolute server path" "$TRM/.mcp.json" "$ROOT/bin/mcp-server.py"
+not_contains ".mcp.json has no placeholder" "$TRM/.mcp.json" "__REPO_ROOT__"
+python3 -m json.tool "$TRM/.mcp.json" > /dev/null 2>&1; RC=$?
+check ".mcp.json is valid JSON" "$RC" "0"
 
 TRM2="$WORK/trm2"; mkdir -p "$TRM2"
 ( cd "$TRM2" && "$ROOT/bin/register-mcp.sh" > reg2.log 2>&1 )
 check "register-mcp defaults to PWD" "$?" "0"
 test -f "$TRM2/.agents/mcp.json"; RC=$?
 check "default target writes \$PWD/.agents/mcp.json" "$RC" "0"
+test -f "$TRM2/.mcp.json"; RC=$?
+check "default target writes \$PWD/.mcp.json" "$RC" "0"
+
+# ===========================================================================
+echo "== register-mcp.sh: --global merges into ~/.claude.json (mocked HOME)"
+TRMG="$WORK/trmg"; mkdir -p "$TRMG/home"
+printf '%s\n' '{"mcpServers":{"other-server":{"command":"x","args":["y"]}}}' > "$TRMG/home/.claude.json"
+HOME="$TRMG/home" "$ROOT/bin/register-mcp.sh" --global > "$TRMG/global.log" 2>&1
+check "register-mcp --global exits 0" "$?" "0"
+RC=0
+python3 - "$TRMG/home/.claude.json" "$ROOT/bin/mcp-server.py" <<'PY' || RC=1
+import json
+import sys
+path, server = sys.argv[1], sys.argv[2]
+data = json.load(open(path))
+assert "delegate-openhands" in data["mcpServers"], "delegate-openhands missing"
+assert data["mcpServers"]["other-server"]["command"] == "x", "pre-existing server lost"
+assert server in data["mcpServers"]["delegate-openhands"]["args"][0], "bad server path"
+PY
+check "global merge adds delegate-openhands, keeps other servers" "$RC" "0"
+test -f "$TRMG/home/.agents/mcp.json"; RC=$?
+check "--global writes ~/.agents/mcp.json" "$RC" "0"
+containsF "global agents file has absolute path" "$TRMG/home/.agents/mcp.json" "$ROOT/bin/mcp-server.py"
+# idempotent: re-running preserves the other server
+HOME="$TRMG/home" "$ROOT/bin/register-mcp.sh" --global > /dev/null 2>&1
+RC=0
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert 'other-server' in d['mcpServers']; assert 'delegate-openhands' in d['mcpServers']" "$TRMG/home/.claude.json" || RC=1
+check "re-running --global stays idempotent" "$RC" "0"
 
 # ===========================================================================
 echo
