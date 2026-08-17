@@ -6,6 +6,7 @@
 # and writes:
 #   $HOME/.mock-env.dump   sorted environment the mock actually received
 #   $HOME/.mock-args.dump  arguments the mock actually received
+#   $HOME/.mock-task.dump  contents of the file passed after -f
 for arg in "$@"; do
   if [[ "$arg" == "--help" ]]; then
     if [[ -f "$HOME/.mock-override" ]]; then
@@ -15,6 +16,15 @@ for arg in "$@"; do
     exit 0
   fi
 done
+
+prev=""
+for arg in "$@"; do
+  if [[ "$prev" == "-f" && -f "$arg" ]]; then
+    cat "$arg" > "$HOME/.mock-task.dump"
+  fi
+  prev="$arg"
+done
+
 env | sort > "$HOME/.mock-env.dump"
 printf '%s\n' "$@" > "$HOME/.mock-args.dump"
 if [[ -f "$HOME/.mock-exit" ]]; then

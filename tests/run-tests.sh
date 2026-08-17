@@ -92,6 +92,27 @@ check "process sandbox allowed with opt-in" "$?" "0"
 contains "RUNTIME=process passed through" "$ENV_DUMP" "RUNTIME=process"
 unset RUNTIME ALLOW_PROCESS_SANDBOX
 
+# ---- role resolution ----------------------------------------------------------
+echo "== delegate.sh: role resolution"
+"$ROOT/bin/delegate.sh" -t "build a button" -r browser-use -d "$T/dir" > /dev/null 2>&1
+check "role browser-use exits 0" "$?" "0"
+contains "role pins vision model" "$ENV_DUMP" "LLM_MODEL=openai/minimaxai/minimax-m3"
+contains "role operating rules injected" "$HOME/.mock-task.dump" "Operating rules: browser-use"
+contains "user task present after rules" "$HOME/.mock-task.dump" "build a button"
+
+"$ROOT/bin/delegate.sh" -t "summarize" -r researcher > /dev/null 2>&1
+contains "researcher role uses GLM" "$ENV_DUMP" "LLM_MODEL=openai/z-ai/glm-5.2"
+contains "researcher rules injected" "$HOME/.mock-task.dump" "Operating rules: researcher"
+
+"$ROOT/bin/delegate.sh" -t "review" -r code-reviewer -m minimaxai/minimax-m3 > /dev/null 2>&1
+contains "explicit -m overrides role model" "$ENV_DUMP" "LLM_MODEL=openai/minimaxai/minimax-m3"
+
+set +e
+"$ROOT/bin/delegate.sh" -t "x" -r bogus-role > "$T/badrole.log" 2>&1
+RC=$?
+set -e
+check "unknown role rejected" "$RC" "3"
+
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"
 T2="$WORK/t2"; mkdir -p "$T2/home" "$T2/skills" "$T2/curlbody"

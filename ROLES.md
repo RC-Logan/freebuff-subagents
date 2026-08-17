@@ -1,44 +1,52 @@
-# Subagent roles (base2-style)
+# Capability roles
 
-The Freebuff CLI used to spawn named subagents (`browser-use`, `researcher-web`,
-`researcher-docs`, `editor`, `code-reviewer`, `context-pruner`, ...). That
-mechanism no longer exists in the client, and we must not modify the client.
-These roles restore the same *capabilities* through the safe delegation skill:
-each role selects a NIM model and a task discipline, and every role runs through
-the same sandboxed, sanitized wrapper (`bin/delegate.sh`).
+The Freebuff CLI used to spawn named subagents. This repo restores the same
+*capabilities* — and goes further — as **enforced roles**: each role lives in
+`roles/<name>/` and is applied deterministically by the wrapper:
 
-| Role | Model | Purpose |
+- `roles/<name>/role.conf` — pins the NIM model and describes the role.
+- `roles/<name>/prompt.md` — operating rules injected into every delegation
+  for that role (the discipline no longer depends on the main model remembering
+  to write it).
+
+Invoke with `./bin/delegate.sh -t "<task>" -r <role>` (or via the skill's
+`role` parameter). `-m <model>` overrides the role's pinned model.
+
+| Role | Model | Capability |
 |---|---|---|
-| `browser-use` | `minimaxai/minimax-m3` | Browser, screenshots, visual/design work. Multimodal — this is the vision role. |
-| `researcher` | `z-ai/glm-5.2` | Multi-page web research; return sources with URLs. |
-| `code-editor` | `z-ai/glm-5.2` | Implement changes in a repo, run the relevant tests. |
-| `code-reviewer` | `z-ai/glm-5.2` | Review a diff/repo; return findings with severity and line refs. |
-| `context-pruner` | `z-ai/glm-5.2` | Condense/summarize a large context or transcript into a structured digest. |
+| `browser-use` | `minimaxai/minimax-m3` | Vision-capable browser: screenshots, design, visual QA. Screenshot-per-step is enforced by the role prompt; screenshots are saved to the working dir and surfaced in the result. |
+| `researcher` | `z-ai/glm-5.2` | Multi-page web research; returns claims with sources (URLs). |
+| `code-editor` | `z-ai/glm-5.2` | Implements changes in a repo, runs typecheck/tests, reports results. |
+| `code-reviewer` | `z-ai/glm-5.2` | Reviews code/diffs; returns severity-ranked findings with file:line refs. No edits. |
+| `context-pruner` | `z-ai/glm-5.2` | Condenses large context into a structured, lossless digest. |
 
-## Per-role task discipline (the main model should bake this into
-`task_instructions`)
+## Why this surpasses the old subagent structure
 
-- **browser-use** — mandate screenshot-per-step: "after every action, take a
-  screenshot and describe what you see before deciding the next step." Require
-  the agent to return the captured images/paths so the user can verify visuals.
-- **researcher** — require a sources list at the end: URL + one-line claim for
-  each source. Ask for explicit "not found" statements instead of guessing.
-- **code-editor** — require: implement, then run the project's typecheck/tests,
-  then report what changed and the results. Scope edits to the working directory.
-- **code-reviewer** — require findings as a severity-ranked list with file/line
-  references; no code edits.
-- **context-pruner** — require a structured digest (decisions, open questions,
-  artifacts, next steps); preserve concrete identifiers and paths verbatim.
+- **Deterministic discipline** — operating rules are enforced by the wrapper
+  per role, not recalled by the orchestrator.
+- **Right model per capability** — the vision role runs on a genuinely
+  multimodal model (MiniMax-M3), not a text-first lite model.
+- **One safety envelope** — every role runs through the same Docker-sandboxed,
+  sanitized-env wrapper; roles cannot opt out of the safety guarantees.
+- **Configurable and testable** — roles are plain files; the pre-run suite
+  verifies model pinning and prompt injection.
 
-## How it maps to the safe wrapper
+## Adding a role
 
-The skill's `role` parameter picks the model (per the table above); the wrapper
-enforces Docker sandbox, sanitizes the environment, and returns the exit code.
-Nothing here modifies the Freebuff client — these are local files only.
+```bash
+mkdir roles/my-role
+# roles/my-role/role.conf:
+#   name=my-role
+#   description=...
+#   model=z-ai/glm-5.2
+# roles/my-role/prompt.md:  (operating rules, injected verbatim)
+```
+
+The skill's `role` enum should list it too (SKILL.md frontmatter).
 
 ## When NOT to use a role
 
 - Single-shot vision extraction (look at one image) → call NIM directly from
   Freebuff; don't spawn a full agent session.
-- The main thread can already do the task comfortably → do it in-thread; every
+- The main thread can do the task comfortably → do it in-thread; every
   delegation costs 1+ NIM calls against the ~40 RPM budget.

@@ -2,10 +2,11 @@
 name: delegate_to_openhands
 description: Dispatches complex multi-step coding, debugging, file-editing, terminal,
   or browser/design tasks to an autonomous OpenHands subagent running against NVIDIA
-  NIM. Restores the former Freebuff base2 subagent roles (browser-use, researcher,
-  code-editor, code-reviewer, context-pruner) safely: the role selects the model
-  (MiniMax-M3 for vision/browser, GLM-5.2 for text/code), and every delegation runs
-  in a Docker sandbox with a sanitized environment.
+  NIM. Provides the former Freebuff subagent capabilities (browser-use, researcher,
+  code-editor, code-reviewer, context-pruner) as enforced roles: the wrapper pins
+  the model (MiniMax-M3 for vision/browser, GLM-5.2 for text/code) and injects each
+  role's operating rules. Every delegation runs in a Docker sandbox with a
+  sanitized environment.
 parameters:
   type: object
   properties:
@@ -20,8 +21,8 @@ parameters:
       default: "."
     role:
       type: string
-      description: Subagent role, like the former Freebuff base2 subagents. Picks the
-        model and task discipline; see ROLES.md in the repo. Overridable via model.
+      description: Capability role (see roles/ and ROLES.md in the repo). The wrapper
+        enforces the role's model and operating rules. Overridable via model.
       default: code-editor
       enum: [browser-use, researcher, code-editor, code-reviewer, context-pruner]
     model:
@@ -34,15 +35,16 @@ parameters:
 
 # Execution
 
-1. Resolve the model for the requested `role` from ROLES.md (browser-use →
-   minimaxai/minimax-m3; all others → z-ai/glm-5.2) unless `model` is given
-   explicitly. Bake the role's task discipline into `task_instructions`.
-2. Write `task_instructions` to a temporary task file.
+1. For a `role`, pass `-r <role>`: delegate.sh reads `roles/<role>/role.conf`
+   (model) and `prompt.md` (operating rules) and composes the task file
+   automatically. `-m <model>` overrides the role's model. The role's discipline
+   is enforced by the wrapper, not by memory.
+2. Write `task_instructions` to a temporary task file (or pass via `-t`).
 3. Run the wrapper from this repo's checkout (never inline-shell the task — quoting
    breaks on quotes/newlines):
 
    ```bash
-   cd <repo> && ./bin/delegate.sh -f <task_file> -d <working_directory> -m <model>
+   cd <repo> && ./bin/delegate.sh -r <role> -t "<task_instructions>" -d <working_directory>
    ```
 
    `delegate.sh` runs `openhands --headless` with a **sanitized environment**
