@@ -21,6 +21,14 @@ constraints: [`docs/WHY.md`](docs/WHY.md).
 Model is chosen **per call** (`-m`), so the main thread can stay on your
 coding model while delegated vision work runs on M3.
 
+## Subagent roles (base2-style)
+
+The Freebuff CLI used to spawn named subagents (`browser-use`, `researcher`,
+`editor`, `code-reviewer`, `context-pruner`, ...). Those roles are restored
+through the safe delegation skill — the `role` parameter picks the model and
+task discipline, and every role runs through the same sandboxed, sanitized
+wrapper. See [`ROLES.md`](ROLES.md) for the role → model → discipline table.
+
 ## Quickstart (reproduce on a new instance)
 
 ```bash
