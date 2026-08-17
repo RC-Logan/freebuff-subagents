@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Mock openhands for pre-run testing. delegate.sh runs the real binary under
+# `env -i`, so this mock reads its config via HOME (which IS passed through):
+#   $HOME/.mock-override   presence => --help advertises --override-with-envs + --json
+#   $HOME/.mock-exit       file containing the exit code to return (default 0)
+# and writes:
+#   $HOME/.mock-env.dump   sorted environment the mock actually received
+#   $HOME/.mock-args.dump  arguments the mock actually received
+for arg in "$@"; do
+  if [[ "$arg" == "--help" ]]; then
+    if [[ -f "$HOME/.mock-override" ]]; then
+      echo "--override-with-envs"
+      echo "--json"
+    fi
+    exit 0
+  fi
+done
+env | sort > "$HOME/.mock-env.dump"
+printf '%s\n' "$@" > "$HOME/.mock-args.dump"
+if [[ -f "$HOME/.mock-exit" ]]; then
+  exit "$(cat "$HOME/.mock-exit")"
+fi
+exit 0

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Mock uv: any invocation succeeds as a no-op (dry-run mode).
+exit 0

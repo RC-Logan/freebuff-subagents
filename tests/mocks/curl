@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Mock curl: captures the -d request body to $MOCK_CURL_BODY and answers 200.
+prev=""
+for arg in "$@"; do
+  if [[ "$prev" == "-d" && -n "${MOCK_CURL_BODY:-}" ]]; then
+    printf '%s' "$arg" > "$MOCK_CURL_BODY"
+  fi
+  prev="$arg"
+done
+echo "200"
