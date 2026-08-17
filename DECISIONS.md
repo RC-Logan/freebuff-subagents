@@ -148,23 +148,37 @@ feature. If the MCP route fails, restore the skill from history and re-add
 the copy hooks.
 
 ### 17. Public-readiness: research notes removed from the tree — DONE
-`docs/WHY.md` (candid Freebuff-internal analysis and
-account-boundary reasoning) was removed from the tree and replaced by a
+The research notes (candid Freebuff-internal analysis and
+account-boundary reasoning) were removed from the tree and replaced by a
 neutral purpose doc, `docs/WHY.md` (why this repo exists + the problem it
 solves). The client-boundary rule (decision 3) was reframed without the
 account/monetization speculation: the Freebuff client is a black box;
-external delegation is the only path. NOTE: the removed doc's content still
-exists in earlier git history — a history purge (force-push) is required to
-remove it from a public repo entirely, and that has NOT been done.
+external delegation is the only path. The content was later purged from git
+history entirely — see decision 18.
+
+### 18. History purge: sensitive content removed from all git history — DONE
+After the repo went up, the removed research notes still lived in earlier
+commits. Performed a full history rewrite (six `git filter-branch` passes)
+to make the repo public-ready: removed the research-notes file from every
+commit, scrubbed the sensitive phrases (the monetization claim, the
+account-ban reasoning, an internal override name, and Freebuff-internal
+identifiers) from every tree, rewrote the one commit message that named the
+removed file, and re-pointed the `skill-fallback` tag. Force-pushed `main`
+and the tag; deleted the local pre-rewrite backup refs; expired the reflog
+and ran `git gc --prune=now` so the old objects are gone locally too.
+Verified: no trace of the file, the phrases, or the identifiers in any
+reachable commit, tree, or commit message.
 
 ---
 
 ## Current status (2026-08-16)
 
 - Repo published: **`github.com/RC-Logan/freebuff-subagents`** (private).
-- Self-tested: **64/64 assertions green** in `tests/run-tests.sh` (macOS 27).
+- Self-tested: **61/61 assertions green** in `tests/run-tests.sh` (macOS 27).
 - The Freebuff skill was removed from the tree (fallback in git history);
   the MCP server is the planned integrated path, not yet built.
+- Git history purged of the sensitive research notes and related analysis
+  (decision 18) — the repo is now safe to make public.
 - **Not yet live:** no API key in `.env`, no Docker installed, no real NIM
   call, no smoke test run.
 
