@@ -6,6 +6,7 @@
 *.log
 test_nim.py
 /tmp/
+.oh-marker
 
 # OS noise
 .DS_Store

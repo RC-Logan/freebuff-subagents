@@ -226,7 +226,7 @@ contains "config model has openai/ prefix" "$T2/home/.openhands/agent_settings.j
 contains "config base URL" "$T2/home/.openhands/agent_settings.json" 'https://integrate.api.nvidia.com/v1'
 contains "config api key" "$T2/home/.openhands/agent_settings.json" 'nvapi-install-test'
 contains "install.sh notes the skill removal" "$T2/install.log" "MCP server"
-contains "install.sh names the fallback commit" "$T2/install.log" "36bc240"
+contains "install.sh names the fallback tag" "$T2/install.log" "skill-fallback"
 contains "NIM ping uses BARE model id" "$T2/curlbody/body.txt" '"model":"z-ai/glm-5.2"'
 not_contains "NIM ping body has no openai/ prefix" "$T2/curlbody/body.txt" 'openai/'
 

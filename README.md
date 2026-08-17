@@ -73,7 +73,7 @@ it is slow on a fresh machine.
    OpenAI-compatible provider works too — see Providers below.)
 2. **Create `.env` from the template:**
    ```bash
-   git clone <this-repo> && cd openhands-nim-delegation
+   git clone <this-repo> && cd freebuff-subagents
    cp .env.example .env
    ```
 3. **Set the minimum** — everything else is optional:
@@ -114,13 +114,13 @@ exposing the `delegate` tool — typed `role` + `task` + `working_directory` in,
 structured JSON out — which is strictly stronger than a prose skill. It is
 not yet built (see [`DECISIONS.md`](DECISIONS.md) #13/#16).
 
-**Fallback:** the skill is preserved in git history at commit `36bc240` (the
-first push). Restore it with:
+**Fallback:** the skill is preserved in git history at tag `skill-fallback`
+(the first push). Restore it with:
 
 ```bash
-git show 36bc240:.agents/skills/delegate-openhands/SKILL.md > SKILL.md
+git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md > SKILL.md
 # or restore the whole tree:
-git checkout 36bc240 -- .agents/skills/delegate-openhands
+git checkout skill-fallback -- .agents/skills/delegate-openhands
 ```
 
 Until the MCP server ships, delegate from the terminal.
@@ -214,6 +214,6 @@ docs/REPO_HYGIENE.md                    # standards for agents working on this r
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| Nothing to invoke from Freebuff yet | The skill was removed in favor of an MCP server (planned). Until it ships, delegate from the terminal via `./bin/delegate.sh`; the skill fallback lives in git history at `36bc240`. |
+| Nothing to invoke from Freebuff yet | The skill was removed in favor of an MCP server (planned). Until it ships, delegate from the terminal via `./bin/delegate.sh`; the skill fallback lives in git history at tag `skill-fallback`. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

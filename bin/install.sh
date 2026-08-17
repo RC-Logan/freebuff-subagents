@@ -113,10 +113,10 @@ echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 # ---- Freebuff skill: removed (MCP route; fallback in git history) ----------
 # The skill was intentionally removed from the tree (DECISIONS.md #16): the
 # integrated Freebuff path is an MCP server (planned). If that route fails,
-# restore the skill from git history — it shipped at commit 36bc240.
+# restore the skill from git history — it is preserved at tag skill-fallback.
 echo "==> Skill: removed in favor of an MCP server (planned — see DECISIONS.md)"
-echo "    fallback: preserved in git history at 36bc240"
-echo "    (git show 36bc240:.agents/skills/delegate-openhands/SKILL.md)"
+echo "    fallback: preserved in git history at tag skill-fallback"
+echo "    (git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md)"
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"

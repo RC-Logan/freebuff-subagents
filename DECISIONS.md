@@ -139,9 +139,10 @@ push as the fallback snapshot.
 After the first push, `.agents/skills/delegate-openhands/` was intentionally
 deleted (`git rm`) so the repo stops shipping a mechanism the MCP route
 supersedes. The skill is NOT lost — it is preserved in git history at the
-first push commit (recoverable via `git show <sha>:...` or `git checkout
-<sha> -- .agents/skills/delegate-openhands`). install.sh/check-env.sh/README
-no longer reference a skills dir; `FREE_BUFF_SKILLS_DIR` was removed with the
+first push commit, anchored by tag `skill-fallback` (recoverable via
+`git show skill-fallback:...` or `git checkout skill-fallback --
+.agents/skills/delegate-openhands`). install.sh/check-env.sh/README no
+longer reference a skills dir; `FREE_BUFF_SKILLS_DIR` was removed with the
 feature. If the MCP route fails, restore the skill from history and re-add
 the copy hooks.
 
