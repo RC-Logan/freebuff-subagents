@@ -54,9 +54,14 @@ VISION_API_KEY=... ./bin/delegate.sh -r browser-use -t "..."
 The Freebuff CLI used to spawn named subagents. Those *capabilities* are
 restored — and exceeded — as **enforced roles** in `roles/<name>/`: each role
 pins its NIM model (`role.conf`) and carries its own operating rules
-(`prompt.md`) that the wrapper injects into every delegation. `-r <role>` picks
-the role; every role runs through the same sandboxed, sanitized wrapper.
-See [`ROLES.md`](ROLES.md) for the table and how to add roles.
+(`prompt.md`) that the wrapper injects into every delegation. On top of those,
+the wrapper injects a shared **quality & documentation baseline**
+(`roles/common/quality-and-docs.md`) into **every** delegation — docs kept in
+sync, decisions recorded, smallest change, typecheck/tests before done,
+verified results, honest caveats, and a required four-part final report.
+`-r <role>` picks the role; every role runs through the same sandboxed,
+sanitized wrapper. See [`ROLES.md`](ROLES.md) for the table and how to add
+roles.
 
 ## First-time setup (reproduce on a new instance)
 

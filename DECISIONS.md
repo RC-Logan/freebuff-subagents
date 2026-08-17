@@ -109,34 +109,62 @@ opt-in override for copying the skill elsewhere.
 handled (trailing-`X` mktemp, no arrays under bash 3.2), but Linux/GNU and
 Windows are untested; the suite must pass on a platform before it is claimed.
 
-### 13. Skill vs MCP — OPEN QUESTION (recommendation: MCP)
+### 13. Skill vs MCP — RESOLVED (MCP, with the skill as a git-history fallback)
 The capability is transport-agnostic (`delegate.sh` is the engine). A skill
 is prose instructions the model must execute correctly; an **MCP server
 exposing a `delegate` tool** gives typed parameters, structured results
 (exit code, changed files, summary), and hard enforcement before the model
-acts. Recommendation: MCP as the integrated path, skill as the
-zero-dependency fallback. **Unverified:** Freebuff's MCP registration
-mechanism — must be researched before building.
+acts. Native MCP support was verified as active in the current Freebuff
+source (project-local MCP registration exists; version-dependent in the
+shipped binaries). Decision: MCP is the integrated path; the skill is not
+kept as a living fallback — it is preserved in git history (decision 16).
+
+### 14. Quality & documentation baseline — ADOPTED
+Every delegation now carries an injected shared baseline
+(`roles/common/quality-and-docs.md`), on top of any role rules: docs kept in
+sync with code, decisions recorded, no dead code/orphaned TODOs, smallest
+change, typecheck + tests before done, verified (never assumed) results,
+explicit caveats, and a required four-part final report. The wrapper injects
+it deterministically into every task (with or without a role), so the
+discipline survives new and custom roles without being re-written.
+
+### 15. Published to GitHub — DONE
+Repo `freebuff-subagents` (private) created on the `RC-Logan` account and
+pushed. Commit authorship was rewritten (pre-push, recoverable via
+`refs/original/`) to `RC-Logan <RC-Logan@users.noreply.github.com>` so
+GitHub attributes the work to the account. The skill ships in this first
+push as the fallback snapshot.
+
+### 16. Skill removed — MCP route; fallback in git history
+After the first push, `.agents/skills/delegate-openhands/` was intentionally
+deleted (`git rm`) so the repo stops shipping a mechanism the MCP route
+supersedes. The skill is NOT lost — it is preserved in git history at the
+first push commit (recoverable via `git show <sha>:...` or `git checkout
+<sha> -- .agents/skills/delegate-openhands`). install.sh/check-env.sh/README
+no longer reference a skills dir; `FREE_BUFF_SKILLS_DIR` was removed with the
+feature. If the MCP route fails, restore the skill from history and re-add
+the copy hooks.
 
 ---
 
 ## Current status (2026-08-16)
 
-- Repo complete and self-tested: **60/60 assertions green** in
-  `tests/run-tests.sh` (macOS 27).
+- Repo published: **`github.com/RC-Logan/freebuff-subagents`** (private).
+- Self-tested: **64/64 assertions green** in `tests/run-tests.sh` (macOS 27).
+- The Freebuff skill was removed from the tree (fallback in git history);
+  the MCP server is the planned integrated path, not yet built.
 - **Not yet live:** no API key in `.env`, no Docker installed, no real NIM
   call, no smoke test run.
-- **Not yet pushed** to GitHub.
 
 ## Open items
 
+- [ ] Build the MCP server exposing the `delegate` tool (research Freebuff's
+      MCP registration mechanism first — config file/format on the
+      installed client).
+- [ ] If the MCP route fails: restore the skill from git history and re-add
+      the install hooks.
 - [ ] Set `NVIDIA_API_KEY` in `.env` and run `./bin/check-env.sh`.
 - [ ] Install Docker (OrbStack recommended) and run `./bin/install.sh`.
 - [ ] Run `./bin/smoke-test.sh` on both models; add a vision smoke test
       (assert screenshots returned) for the browser-use role.
-- [ ] Verify Freebuff discovers the skill natively from the project's
-      `.agents/skills`.
-- [ ] Push to GitHub (name `freebuff-subagents`, private by default; decide
-      git identity for attribution).
-- [ ] Resolve the skill-vs-MCP question (research Freebuff MCP registration).
 - [ ] Optional: GitHub Actions CI running the pre-run suite.

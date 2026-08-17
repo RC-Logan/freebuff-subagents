@@ -121,16 +121,22 @@ if [[ -n "$TASK_TEXT" ]]; then
   printf '%s\n' "$TASK_TEXT" > "$TMP_TASK"
   TASK_FILE="$TMP_TASK"
 fi
-# Compose the final task: role operating rules (if any) + user task.
+# Compose the final task: role operating rules (if any) + the shared quality
+# and documentation baseline + the user task. The baseline
+# (roles/common/quality-and-docs.md) is injected into EVERY delegation so the
+# documentation/quality discipline holds for all roles — including custom ones
+# that only ship a role.conf and prompt.md.
+COMPOSED="$(mktemp /tmp/oh-task.XXXXXX)"
 if [[ -n "$ROLE" && -f "$ROLE_PROMPT" ]]; then
-  COMPOSED="$(mktemp /tmp/oh-task.XXXXXX)"
   cat "$ROLE_PROMPT" > "$COMPOSED"
-  printf '\n\n# Task\n\n' >> "$COMPOSED"
-  cat "$TASK_FILE" >> "$COMPOSED"
-  rm -f "$TMP_TASK"
-  TASK_FILE="$COMPOSED"
-  TMP_TASK="$COMPOSED"
+  printf '\n\n' >> "$COMPOSED"
 fi
+cat "$SCRIPT_DIR/roles/common/quality-and-docs.md" >> "$COMPOSED"
+printf '\n\n# Task\n\n' >> "$COMPOSED"
+cat "$TASK_FILE" >> "$COMPOSED"
+rm -f "$TMP_TASK"
+TASK_FILE="$COMPOSED"
+TMP_TASK="$COMPOSED"
 # Make the task path absolute before any cd
 TASK_FILE="$(cd "$(dirname "$TASK_FILE")" && pwd)/$(basename "$TASK_FILE")"
 

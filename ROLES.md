@@ -10,8 +10,19 @@ The Freebuff CLI used to spawn named subagents. This repo restores the same
   for that role (the discipline no longer depends on the main model remembering
   to write it).
 
-Invoke with `./bin/delegate.sh -t "<task>" -r <role>` (or via the skill's
-`role` parameter). `-m <model>` overrides the model for that run.
+Invoke with `./bin/delegate.sh -t "<task>" -r <role>`. `-m <model>`
+overrides the model for that run.
+
+## Quality & documentation baseline (every delegation)
+
+On top of the role rules, the wrapper injects
+`roles/common/quality-and-docs.md` into **every** delegation — with or
+without a role. It mandates: docs kept in sync with code, decisions recorded,
+no dead code / orphaned TODOs, smallest-change discipline, typecheck + tests
+before reporting done, verified (never assumed) results, explicit caveats,
+and a required four-part final report (files changed / commands run /
+verified / caveats). Role prompts don't need to repeat it — it is guaranteed
+by the wrapper, so custom roles inherit it automatically.
 
 | Role | Provider | Default model | Capability |
 |---|---|---|---|
@@ -61,10 +72,13 @@ mkdir roles/my-role
 #   description=...
 #   provider=text          # text | vision
 #   model=your-default-model
-# roles/my-role/prompt.md:  (operating rules, injected verbatim)
+# roles/my-role/prompt.md:  (operating rules, injected verbatim before the
+#                            shared quality/documentation baseline)
 ```
 
-The skill's `role` enum should list it too (SKILL.md frontmatter).
+The shared baseline is added automatically; you only write the role-specific
+rules. (Previously roles were also exposed through a Freebuff skill — that
+skill was removed in favor of an MCP server, see DECISIONS.md.)
 
 ## When NOT to use a role
 
