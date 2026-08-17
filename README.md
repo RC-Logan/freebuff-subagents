@@ -11,6 +11,14 @@ browser/design work loses visual feedback. Delegation restores a
 cheap, specialized worker outside the harness. Full background, audit, and
 constraints: [`docs/WHY.md`](docs/WHY.md).
 
+## Platform support
+
+**Tested on: macOS 27 only** (bash 3.2, BSD coreutils). The scripts are written
+as portable POSIX bash with macOS quirks handled explicitly (trailing-`X`
+`mktemp` templates, no arrays under bash 3.2), but Linux/GNU and Windows
+behavior is **not yet tested** — run `./tests/run-tests.sh` on any new platform
+before relying on it.
+
 ## Model routing
 
 | Workload | Model | NIM ID |
@@ -63,11 +71,13 @@ Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe loc
 
 ```
 bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping, skill install
-bin/delegate.sh       # sanitized-env headless wrapper (per-call model routing)
+bin/delegate.sh       # sanitized-env headless wrapper (roles, per-call model routing)
 bin/smoke-test.sh     # end-to-end validation
 config/               # config templates (V1 JSON + V0 TOML fallback)
+roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
 skills/delegate_to_openhands/SKILL.md   # the Freebuff skill definition
 tasks/smoke-task.md   # minimal task used by the smoke test
+tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md            # research, concerns, safe-boundary audit
 ```
 

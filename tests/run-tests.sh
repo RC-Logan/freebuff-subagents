@@ -8,6 +8,9 @@
 # The mock openhands channels its config through HOME (see tests/mocks/openhands),
 # because delegate.sh runs the real binary under `env -i`.
 #
+# Tested on: macOS 27 only (bash 3.2, BSD coreutils). Platform coverage is
+# macOS-only until this suite is run and passes on another platform.
+#
 # Usage: ./tests/run-tests.sh
 set -euo pipefail
 
