@@ -218,12 +218,11 @@ containsF "check-env reports daemon down" "$T/check.log" "daemon NOT running"
 unset MOCK_DOCKER_STATUS
 
 # ===========================================================================
-echo "== install.sh: config generation (V1), skill install, NIM ping payload"
-T2="$WORK/t2"; mkdir -p "$T2/home" "$T2/skills" "$T2/curlbody"
+echo "== install.sh: config generation (V1), NIM ping payload, skill removal note"
+T2="$WORK/t2"; mkdir -p "$T2/home" "$T2/curlbody"
 export HOME="$T2/home"
 export NVIDIA_API_KEY="nvapi-install-test"
 export DEFAULT_MODEL="z-ai/glm-5.2"
-export FREE_BUFF_SKILLS_DIR="$T2/skills"
 export MOCK_CURL_BODY="$T2/curlbody/body.txt"
 unset OPENHANDS_VERSION
 touch "$HOME/.mock-override"   # simulate V1 CLI
@@ -238,8 +237,8 @@ check "V1 config file written" "$RC" "0"
 contains "config model has openai/ prefix" "$T2/home/.openhands/agent_settings.json" 'openai/z-ai/glm-5.2'
 contains "config base URL" "$T2/home/.openhands/agent_settings.json" 'https://integrate.api.nvidia.com/v1'
 contains "config api key" "$T2/home/.openhands/agent_settings.json" 'nvapi-install-test'
-test -f "$T2/skills/delegate-openhands/SKILL.md"; RC=$?
-check "skill copied to skills dir" "$RC" "0"
+contains "install.sh notes the skill removal" "$T2/install.log" "MCP server"
+contains "install.sh names the fallback commit" "$T2/install.log" "36bc240"
 contains "NIM ping uses BARE model id" "$T2/curlbody/body.txt" '"model":"z-ai/glm-5.2"'
 not_contains "NIM ping body has no openai/ prefix" "$T2/curlbody/body.txt" 'openai/'
 
@@ -271,19 +270,19 @@ check "invalid RUNTIME rejected by install.sh" "$RC" "1"
 unset RUNTIME
 
 # ===========================================================================
-echo "== install.sh: no default skills-dir copy when unset"
+echo "== install.sh: skill removed (no skills-dir machinery, no copy)"
 T5="$WORK/t5"; mkdir -p "$T5/home" "$T5/project" "$T5/curlbody"
 export HOME="$T5/home"
 export NVIDIA_API_KEY="nvapi-install-test"
 export MOCK_CURL_BODY="$T5/curlbody/body.txt"
-unset FREE_BUFF_SKILLS_DIR OPENHANDS_VERSION
+unset OPENHANDS_VERSION
 
 ( cd "$T5/project" && "$ROOT/bin/install.sh" > "$T5/install.log" 2>&1 )
 RC=$?
 check "install.sh exits 0 from project cwd" "$RC" "0"
 test ! -e "$T5/project/.agents/skills"; RC=$?
-check "no default copy when FREE_BUFF_SKILLS_DIR unset" "$RC" "0"
-contains "install.sh explains native discovery" "$T5/install.log" "natively"
+check "no skills copy happens (feature removed)" "$RC" "0"
+contains "install.sh still notes the fallback" "$T5/install.log" "git history"
 
 # ===========================================================================
 echo

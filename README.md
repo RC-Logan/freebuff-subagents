@@ -108,26 +108,30 @@ Notes for step 3:
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 (`config.toml`) config scheme and writes the right one.
 
-## Skills & discovery
+## Skill → MCP (planned)
 
-Freebuff/Codebuff discover skills natively from the **project's `.agents/skills`**
-directory (per the Codebuff docs; project skills have highest priority). No
-default skills directory is configured or changed by this repo.
+The Freebuff skill that originally shipped with this repo was **intentionally
+removed** (2026-08-16): the integrated path for Freebuff is an **MCP server**
+exposing the `delegate` tool — typed `role` + `task` + `working_directory` in,
+structured JSON out — which is strictly stronger than a prose skill. It is
+not yet built (see [`DECISIONS.md`](DECISIONS.md) #13/#16).
 
-- **Repo at (or as) your project root** → the skill is already at
-  `.agents/skills/delegate-openhands/`; restart Freebuff and it is available.
-- **Repo elsewhere** → copy it in:
-  `cp -R <repo>/.agents/skills/delegate-openhands <project>/.agents/skills/`
-- **Prefer another location?** Set `FREE_BUFF_SKILLS_DIR` in `.env` (opt-in)
-  and `install.sh` will copy the skill there.
+**Fallback:** the skill is preserved in git history at commit `36bc240` (the
+first push). Restore it with:
 
-Restart Freebuff after installing to reload skills.
+```bash
+git show 36bc240:.agents/skills/delegate-openhands/SKILL.md > SKILL.md
+# or restore the whole tree:
+git checkout 36bc240 -- .agents/skills/delegate-openhands
+```
+
+Until the MCP server ships, delegate from the terminal.
 
 ## Day-to-day (after the one-time setup)
 
 Once the prerequisites exist — `openhands` installed, `.env` configured,
-Docker running, skill copied — **you do not need `install.sh` again.**
-Delegation is self-contained:
+Docker running — **you do not need `install.sh` again.** Delegation is
+self-contained:
 
 ```bash
 ./bin/delegate.sh -r code-editor -t "..."   # uses .env / env vars directly
@@ -137,9 +141,9 @@ Delegation is self-contained:
 `delegate.sh` passes model, key, and base URL to OpenHands via environment
 variables, so **no persisted OpenHands config file is required for
 delegation**. `install.sh` only does the one-time bootstrap — install
-openhands, write the persisted config (for *interactive* OpenHands use),
-copy the skill, ping the API — and re-running it overwrites the config from
-`.env` (which is the source of truth).
+openhands, write the persisted config (for *interactive* OpenHands use), ping
+the API — and re-running it overwrites the config from `.env` (which is the
+source of truth).
 
 ## Manual delegation
 
@@ -148,8 +152,7 @@ copy the skill, ping the API — and re-running it overwrites the config from
 ./bin/delegate.sh -t "Fix the failing test in ./src" -d ./src
 ./bin/delegate.sh -f /tmp/task.md -m minimaxai/minimax-m3 -d ./design
 
-# From Freebuff: invoke the delegate-openhands skill
-# (.agents/skills/delegate-openhands/SKILL.md — installed by install.sh)
+# From Freebuff: MCP delegate tool (planned — see DECISIONS.md #16)
 ```
 
 Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe local config (e.g. `RUNTIME=process` without opt-in).
@@ -157,14 +160,14 @@ Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe loc
 ## Layout
 
 ```
-bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping, skill install
+bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping
 bin/check-env.sh      # dry-run: prints resolved config, no side effects
 bin/delegate.sh       # sanitized-env headless wrapper (roles, per-call model routing)
 bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
-.agents/skills/delegate-openhands/SKILL.md   # the Freebuff skill (project-local, per Codebuff docs)
+roles/common/         # shared quality & documentation baseline (injected into every delegation)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md            # research, concerns, safe-boundary audit
@@ -213,6 +216,6 @@ docs/WHY.md            # research, concerns, safe-boundary audit
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| Skill doesn't appear in Freebuff | Skills are discovered from the project's `.agents/skills` (Codebuff docs) — ensure `<project>/.agents/skills/delegate-openhands/SKILL.md` exists and the name matches the directory; restart Freebuff to reload. |
+| Nothing to invoke from Freebuff yet | The skill was removed in favor of an MCP server (planned). Until it ships, delegate from the terminal via `./bin/delegate.sh`; the skill fallback lives in git history at `36bc240`. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

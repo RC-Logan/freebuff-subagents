@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap: install OpenHands, wire NVIDIA NIM, install the Freebuff skill.
+# Bootstrap: install OpenHands, wire the LLM provider, ping the API.
 # Idempotent — safe to re-run.
 #
 # Usage: ./bin/install.sh
@@ -110,21 +110,13 @@ EOF
 fi
 echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 
-# ---- Freebuff skill (native discovery; no default dir imposed) -------------
-# Freebuff/Codebuff discover skills from <project>/.agents/skills natively — no
-# default is changed or configured here. The skill ships in this repo at
-# .agents/skills/delegate-openhands. FREE_BUFF_SKILLS_DIR is an OPT-IN override
-# to copy it elsewhere; unset means native project discovery.
-if [[ -n "${FREE_BUFF_SKILLS_DIR:-}" ]]; then
-  echo "==> Copying skill into ${FREE_BUFF_SKILLS_DIR} (explicit override)"
-  mkdir -p "$FREE_BUFF_SKILLS_DIR"
-  cp -R .agents/skills/delegate-openhands "$FREE_BUFF_SKILLS_DIR/"
-else
-  echo "==> Skill discovered natively from the project's .agents/skills"
-  echo "    (clone this repo into your project, or copy .agents/skills/delegate-openhands"
-  echo "    into your project's .agents/skills/ — see README. Set FREE_BUFF_SKILLS_DIR"
-  echo "    to opt into copying it elsewhere.)"
-fi
+# ---- Freebuff skill: removed (MCP route; fallback in git history) ----------
+# The skill was intentionally removed from the tree (DECISIONS.md #16): the
+# integrated Freebuff path is an MCP server (planned). If that route fails,
+# restore the skill from git history — it shipped at commit 36bc240.
+echo "==> Skill: removed in favor of an MCP server (planned — see DECISIONS.md)"
+echo "    fallback: preserved in git history at 36bc240"
+echo "    (git show 36bc240:.agents/skills/delegate-openhands/SKILL.md)"
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"
@@ -147,6 +139,6 @@ cat <<'NEXT'
 Setup complete. Next:
   1. Smoke test:  ./bin/smoke-test.sh
   2. Delegate:    ./bin/delegate.sh -t "your task" [-m minimaxai/minimax-m3]
-  3. From Freebuff: invoke the delegate-openhands skill (discovered from the
-     project's .agents/skills; restart Freebuff to reload skills).
+  3. From Freebuff: an MCP delegate tool is planned (see DECISIONS.md); until
+     it ships, delegate from the terminal via ./bin/delegate.sh.
 NEXT
