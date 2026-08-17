@@ -98,6 +98,24 @@ Notes for step 3:
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 (`config.toml`) config scheme and writes the right one.
 
+## Day-to-day (after the one-time setup)
+
+Once the prerequisites exist — `openhands` installed, `.env` configured,
+Docker running, skill copied — **you do not need `install.sh` again.**
+Delegation is self-contained:
+
+```bash
+./bin/delegate.sh -r code-editor -t "..."   # uses .env / env vars directly
+./bin/delegate.sh -r browser-use -t "..."
+```
+
+`delegate.sh` passes model, key, and base URL to OpenHands via environment
+variables, so **no persisted OpenHands config file is required for
+delegation**. `install.sh` only does the one-time bootstrap — install
+openhands, write the persisted config (for *interactive* OpenHands use),
+copy the skill, ping the API — and re-running it overwrites the config from
+`.env` (which is the source of truth).
+
 ## Manual delegation
 
 ```bash
