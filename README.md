@@ -11,7 +11,8 @@ Why this exists: the Freebuff CLI root agent no longer spawns subagents
 (base2 → base3 switch), and the main-thread model can be text-only — so
 browser/design work loses visual feedback. Delegation restores a
 cheap, specialized worker outside the harness. Full background, audit, and
-constraints: [`docs/WHY.md`](docs/WHY.md).
+constraints: [`docs/WHY.md`](docs/WHY.md);
+the decision log: [`DECISIONS.md`](DECISIONS.md).
 
 ## Platform support
 
