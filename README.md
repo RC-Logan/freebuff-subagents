@@ -11,8 +11,9 @@ Why this exists: the Freebuff CLI root agent no longer spawns subagents
 (base2 → base3 switch), and the main-thread model can be text-only — so
 browser/design work loses visual feedback. Delegation restores a
 cheap, specialized worker outside the harness. Full background, audit, and
-constraints: [`docs/WHY.md`](docs/WHY.md);
-the decision log: [`DECISIONS.md`](DECISIONS.md).
+Why this exists and the problem it solves:
+[`docs/WHY.md`](docs/WHY.md); the decision log:
+[`DECISIONS.md`](DECISIONS.md).
 
 ## Platform support
 
@@ -167,14 +168,14 @@ config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
-docs/WHY.md            # research, concerns, safe-boundary audit
+docs/WHY.md                            # why this repo exists and the problem it solves
 docs/REPO_HYGIENE.md                    # standards for agents working on this repo
 ```
 
 ## Safe boundary (read before changing anything)
 
 - **Never modify Freebuff client code, config, env, or network behavior.**
-  The only safe path is this external subprocess (audit: docs §1c).
+  The only safe path is this external subprocess.
 - `delegate.sh` runs OpenHands with a **sanitized environment** — NVIDIA key and
   routing vars only. Freebuff credentials never cross into the subprocess, and
   the key never appears in output.

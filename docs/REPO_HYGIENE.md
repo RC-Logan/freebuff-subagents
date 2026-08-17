@@ -11,7 +11,7 @@ they are enforced by the pre-run test suite.
 
 - Read the current state first: `README.md` (what it is, how to use it),
   `ROLES.md` (capability roles), `DECISIONS.md` (why things are the way they
-  are), and `docs/WHY.md` (research + audit).
+  are), and `docs/WHY.md` (why this repo exists).
 - Respect the **safe boundary** in the README: never modify Freebuff client
   behavior or interact with Freebuff's servers differently than the client
   already does.

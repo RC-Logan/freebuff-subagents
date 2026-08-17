@@ -1,8 +1,8 @@
 # Decision Log
 
 A dated record of the decisions that shaped this repo, and why. Companion to
-[README.md](README.md) (current state) and
-[docs/WHY.md](docs/WHY.md) (research + audit).
+[README.md](README.md) (current state) and [docs/WHY.md](docs/WHY.md) (why
+this repo exists).
 
 ---
 
@@ -30,15 +30,16 @@ text-only main model (DeepSeek V4) there is **zero visual feedback for
 design work**. This is a capability regression, not a cost problem — the
 decisive driver for the whole project.
 
-### 3. Account-safety boundary — DECIDED (hard constraint)
-Freebuff monetization is ad-supported; client-side behavior changes that
-interact with their servers risk account limits. Therefore:
-- **External delegation is the only safe path** — a local subprocess; the
+### 3. Client boundary — DECIDED (hard constraint)
+The Freebuff client is treated as a black box: nothing in this project may
+change how it authenticates, connects, reports, or resolves agents.
+Therefore:
+- **External delegation is the only path** — a local subprocess; the
   client's server interaction is unchanged.
 - **Never modify the Freebuff client** (no `agents/base3.ts` patch, no
   `base3.test.ts` changes, no harness overrides).
-- **Never use `client-side overrides`** — undocumented override,
-  unknown server observability.
+- **Never use `client-side overrides`** — undocumented override;
+  deployed behavior is a black box.
 - Normal usage is fine (e.g., selecting a shipped model root).
 
 ### 4. Repo structure — ACCEPTED
@@ -145,6 +146,16 @@ first push commit, anchored by tag `skill-fallback` (recoverable via
 longer reference a skills dir; `FREE_BUFF_SKILLS_DIR` was removed with the
 feature. If the MCP route fails, restore the skill from history and re-add
 the copy hooks.
+
+### 17. Public-readiness: research notes removed from the tree — DONE
+`docs/WHY.md` (candid Freebuff-internal analysis and
+account-boundary reasoning) was removed from the tree and replaced by a
+neutral purpose doc, `docs/WHY.md` (why this repo exists + the problem it
+solves). The client-boundary rule (decision 3) was reframed without the
+account/monetization speculation: the Freebuff client is a black box;
+external delegation is the only path. NOTE: the removed doc's content still
+exists in earlier git history — a history purge (force-push) is required to
+remove it from a public repo entirely, and that has NOT been done.
 
 ---
 

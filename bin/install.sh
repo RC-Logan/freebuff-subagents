@@ -130,7 +130,7 @@ if [[ "$HTTP_CODE" == "200" ]]; then
   echo "==> NIM ping OK (HTTP 200)"
 else
   echo "==> NIM ping returned HTTP ${HTTP_CODE} — check the key, model ID, and rate limits"
-  echo "    (rate limit: ~40 RPM free baseline; see docs/WHY.md)"
+  echo "    (rate limit: ~40 RPM free baseline — keep delegations small)"
   exit 1
 fi
 
