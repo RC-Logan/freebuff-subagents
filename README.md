@@ -56,7 +56,7 @@ restored — and exceeded — as **enforced roles** in `roles/<name>/`: each rol
 pins its NIM model (`role.conf`) and carries its own operating rules
 (`prompt.md`) that the wrapper injects into every delegation. On top of those,
 the wrapper injects a shared **quality & documentation baseline**
-(`roles/common/quality-and-docs.md`) into **every** delegation — docs kept in
+(`prompts/quality-and-docs.md`) into **every** delegation — docs kept in
 sync, decisions recorded, smallest change, typecheck/tests before done,
 verified results, honest caveats, and a required four-part final report.
 `-r <role>` picks the role; every role runs through the same sandboxed,
@@ -167,7 +167,7 @@ bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
-roles/common/         # shared quality & documentation baseline (injected into every delegation)
+prompts/              # shared prompt fragments: quality & documentation baseline (injected into every delegation)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md            # research, concerns, safe-boundary audit

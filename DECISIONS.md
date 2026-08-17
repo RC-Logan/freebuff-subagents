@@ -121,12 +121,14 @@ kept as a living fallback — it is preserved in git history (decision 16).
 
 ### 14. Quality & documentation baseline — ADOPTED
 Every delegation now carries an injected shared baseline
-(`roles/common/quality-and-docs.md`), on top of any role rules: docs kept in
-sync with code, decisions recorded, no dead code/orphaned TODOs, smallest
-change, typecheck + tests before done, verified (never assumed) results,
-explicit caveats, and a required four-part final report. The wrapper injects
-it deterministically into every task (with or without a role), so the
-discipline survives new and custom roles without being re-written.
+(`prompts/quality-and-docs.md`) — **repo hygiene, not a role**: it lives
+outside the role system and applies to every task, on top of any role rules.
+It mandates: docs kept in sync with code, decisions recorded, no dead
+code/orphaned TODOs, smallest change, typecheck + tests before done, verified
+(never assumed) results, explicit caveats, and a required four-part final
+report. The wrapper injects it deterministically into every task (with or
+without a role), so the discipline survives new and custom roles without
+being re-written.
 
 ### 15. Published to GitHub — DONE
 Repo `freebuff-subagents` (private) created on the `RC-Logan` account and

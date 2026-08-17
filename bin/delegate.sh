@@ -123,15 +123,15 @@ if [[ -n "$TASK_TEXT" ]]; then
 fi
 # Compose the final task: role operating rules (if any) + the shared quality
 # and documentation baseline + the user task. The baseline
-# (roles/common/quality-and-docs.md) is injected into EVERY delegation so the
-# documentation/quality discipline holds for all roles — including custom ones
-# that only ship a role.conf and prompt.md.
+# (prompts/quality-and-docs.md) is injected into EVERY delegation so the
+# documentation/quality discipline holds for all tasks — with or without a
+# role. It is repo hygiene, not a role: custom roles get it automatically.
 COMPOSED="$(mktemp /tmp/oh-task.XXXXXX)"
 if [[ -n "$ROLE" && -f "$ROLE_PROMPT" ]]; then
   cat "$ROLE_PROMPT" > "$COMPOSED"
   printf '\n\n' >> "$COMPOSED"
 fi
-cat "$SCRIPT_DIR/roles/common/quality-and-docs.md" >> "$COMPOSED"
+cat "$SCRIPT_DIR/prompts/quality-and-docs.md" >> "$COMPOSED"
 printf '\n\n# Task\n\n' >> "$COMPOSED"
 cat "$TASK_FILE" >> "$COMPOSED"
 rm -f "$TMP_TASK"
