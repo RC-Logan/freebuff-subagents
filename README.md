@@ -48,7 +48,7 @@ installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 # (skills/delegate_to_openhands/SKILL.md — installed by install.sh)
 ```
 
-Exit codes: `0` success · `1` task failed · `2` invalid args.
+Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe local config (e.g. `RUNTIME=process` without opt-in).
 
 ## Layout
 
@@ -72,6 +72,27 @@ docs/WHY.md            # research, concerns, safe-boundary audit
 - Headless mode **always auto-approves** every action. Delegate only on explicit
   user intent.
 - NIM free tier is ~40 RPM with daily caps. Keep delegations small; expect 429s.
+
+## Sandboxing & safety
+
+- **Docker by default, enforced.** Agent commands run inside a Docker container,
+  never directly on your machine. Only the delegated working directory (plus
+  anything in `SANDBOX_VOLUMES`) is shared with the host. On macOS with Docker
+  Desktop, containers run inside a Linux VM — double isolation.
+- **`RUNTIME=process` is refused** unless `ALLOW_PROCESS_SANDBOX=1` is set
+  explicitly; it runs commands with your user permissions and no isolation.
+- **What the sandbox protects:** host filesystem, SSH keys, and credentials are
+  not reachable unless explicitly mounted. Never mount `~/.ssh`, `~/.aws`, or
+  similar.
+- **What the sandbox does NOT protect:** network egress. The agent can reach the
+  internet (it must, to call NIM and browse). Don't put secrets in the delegated
+  workspace, and assume anything you mount read-write can be modified.
+- **No approval layer:** headless mode auto-approves every action and
+  `--llm-approve` is unavailable in headless mode. Isolation is the safeguard.
+- **Known trade-off:** with the default bridge network, the sandbox cannot reach
+  host-local services (dev servers, databases). Tasks that must hit `localhost`
+  services need explicit network setup — don't silently switch to `process` to
+  work around this.
 
 ## Troubleshooting
 

@@ -42,10 +42,13 @@ ARGS_DUMP="$HOME/.mock-args.dump"
 export FREE_BUFF_SESSION_TOKEN="secret-session-123"
 export FREEBUFF_API_KEY="sk-freebuff-456"
 export NVIDIA_API_KEY="nvapi-test-789"
+export SANDBOX_VOLUMES="$T/dir:/workspace:rw"
 
 "$ROOT/bin/delegate.sh" -t "hello task" -d "$T/dir" -m minimaxai/minimax-m3 > "$T/out.log" 2>&1
 check "delegation exit 0" "$?" "0"
 contains "NVIDIA key reaches subprocess" "$ENV_DUMP" "NVIDIA_API_KEY=nvapi-test-789"
+contains "RUNTIME=docker passed to subprocess" "$ENV_DUMP" "RUNTIME=docker"
+contains "SANDBOX_VOLUMES passed to subprocess" "$ENV_DUMP" "SANDBOX_VOLUMES=$T/dir:/workspace:rw"
 contains "model routed with openai/ prefix" "$ENV_DUMP" "LLM_MODEL=openai/minimaxai/minimax-m3"
 contains "base URL set" "$ENV_DUMP" "LLM_BASE_URL=https://integrate.api.nvidia.com/v1"
 not_contains "Freebuff session token does NOT leak" "$ENV_DUMP" "FREE_BUFF_SESSION_TOKEN"
@@ -69,6 +72,25 @@ touch "$HOME/.mock-override"
 contains "V1: --override-with-envs flag" "$ARGS_DUMP" "--override-with-envs"
 contains "V1: --json flag" "$ARGS_DUMP" "--json"
 rm -f "$HOME/.mock-override"
+
+# ---- sandbox enforcement ----------------------------------------------------
+unset RUNTIME ALLOW_PROCESS_SANDBOX
+"$ROOT/bin/delegate.sh" -t "sandbox check" > /dev/null 2>&1
+contains "RUNTIME=docker passed to subprocess" "$ENV_DUMP" "RUNTIME=docker"
+
+export RUNTIME="process"
+set +e
+"$ROOT/bin/delegate.sh" -t "unsafe" > "$T/refuse.log" 2>&1
+RC=$?
+set -e
+check "process sandbox refused without opt-in" "$RC" "3"
+contains "refusal explains opt-in" "$T/refuse.log" "ALLOW_PROCESS_SANDBOX"
+
+export ALLOW_PROCESS_SANDBOX="1"
+"$ROOT/bin/delegate.sh" -t "process allowed" > /dev/null 2>&1
+check "process sandbox allowed with opt-in" "$?" "0"
+contains "RUNTIME=process passed through" "$ENV_DUMP" "RUNTIME=process"
+unset RUNTIME ALLOW_PROCESS_SANDBOX
 
 # ===========================================================================
 echo "== install.sh: config generation (V1), skill install, NIM ping payload"
@@ -106,6 +128,19 @@ test -f "$T3/home/.openhands/config.toml"; RC=$?
 check "V0 config.toml written" "$RC" "0"
 contains "V0 model has openai/ prefix" "$T3/home/.openhands/config.toml" 'openai/z-ai/glm-5.2'
 contains "V0 max_iterations" "$T3/home/.openhands/config.toml" 'max_iterations = 25'
+
+# ===========================================================================
+echo "== install.sh: invalid RUNTIME rejected"
+T4="$WORK/t4"; mkdir -p "$T4/home" "$T4/curlbody"
+export HOME="$T4/home"
+export MOCK_CURL_BODY="$T4/curlbody/body.txt"
+export RUNTIME="bogus"
+set +e
+"$ROOT/bin/install.sh" > "$T4/install.log" 2>&1
+RC=$?
+set -e
+check "invalid RUNTIME rejected by install.sh" "$RC" "1"
+unset RUNTIME
 
 # ===========================================================================
 echo

@@ -23,6 +23,18 @@ fi
 DEFAULT_MODEL="${DEFAULT_MODEL:-z-ai/glm-5.2}"
 BASE_URL="https://integrate.api.nvidia.com/v1"
 RUNTIME="${RUNTIME:-docker}"
+case "$RUNTIME" in
+  docker|remote) ;;
+  process)
+    echo "WARNING: RUNTIME=process = NO container isolation (agent commands run" >&2
+    echo "         directly on this machine). delegate.sh will refuse to run unless" >&2
+    echo "         ALLOW_PROCESS_SANDBOX=1 is set." >&2
+    ;;
+  *)
+    echo "ERROR: unknown RUNTIME '$RUNTIME' (expected docker | process | remote)" >&2
+    exit 1
+    ;;
+esac
 MAX_ITERATIONS="${MAX_ITERATIONS:-25}"
 
 echo "==> NIM model:  ${DEFAULT_MODEL}"

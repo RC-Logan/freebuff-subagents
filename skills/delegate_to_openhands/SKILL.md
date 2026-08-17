@@ -51,8 +51,14 @@ parameters:
   baseline). Prefer small, focused delegations; expect 429s under load.
 - **Headless = always-approve:** the subagent auto-executes every action. Only
   delegate on explicit user intent; never chain this from an unattended loop.
-- **Sandbox:** default is Docker (isolated). If `RUNTIME=process` is set there is
-  no container isolation — scope `working_directory` tightly.
+- **Sandbox (enforced):** Docker by default — agent commands run inside a
+  container; only the delegated directory and any `SANDBOX_VOLUMES` are shared
+  with the host. `RUNTIME=process` (no isolation) is **refused** unless
+  `ALLOW_PROCESS_SANDBOX=1` is set. Never mount credential directories.
+- **Isolation limits:** the sandbox has network egress — the agent can reach the
+  internet. Keep secrets out of the delegated workspace. Headless auto-approves
+  every action and `--llm-approve` is unavailable in headless, so isolation,
+  not approval, is the safeguard.
 - **Do not modify any Freebuff client code, config, or network behavior.** This
   skill is a local subprocess only (see docs/WHY.md §1b/§1c).
 - The NVIDIA API key must never appear in chat output or logs.

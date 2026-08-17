@@ -43,6 +43,29 @@ fi
 MODEL="${MODEL:-${DEFAULT_MODEL:-z-ai/glm-5.2}}"
 BASE_URL="https://integrate.api.nvidia.com/v1"
 
+# ---- sandbox safety ----------------------------------------------------------
+# Docker is the enforced default: agent commands run inside a container, and only
+# the delegated working dir (+ SANDBOX_VOLUMES) is shared with the host.
+# RUNTIME=process runs commands directly on this machine — refused unless the
+# user explicitly opts in. RUNTIME is passed through env -i so the choice holds.
+RUNTIME="${RUNTIME:-docker}"
+SANDBOX_VOLUMES="${SANDBOX_VOLUMES:-}"
+case "$RUNTIME" in
+  docker|remote) ;;
+  process)
+    echo "WARNING: RUNTIME=process runs agent commands directly on your machine" >&2
+    echo "         with your user permissions — no container isolation." >&2
+    if [[ "${ALLOW_PROCESS_SANDBOX:-}" != "1" ]]; then
+      echo "REFUSING to run. Set ALLOW_PROCESS_SANDBOX=1 to accept this explicitly." >&2
+      exit 3
+    fi
+    ;;
+  *)
+    echo "ERROR: unknown RUNTIME '$RUNTIME' (expected docker | process | remote)" >&2
+    exit 3
+    ;;
+esac
+
 if [[ -z "$TASK_TEXT" && -z "$TASK_FILE" ]]; then
   echo "ERROR: provide a task with -t or -f" >&2
   exit 2
@@ -81,6 +104,7 @@ fi
 
 echo "==> Delegating to openhands (model: ${MODEL})"
 echo "    task: ${TASK_FILE##*/} | dir: ${PWD}"
+echo "    sandbox: ${RUNTIME}${SANDBOX_VOLUMES:+ | volumes: ${SANDBOX_VOLUMES}}"
 
 # Sanitized environment: only what OpenHands needs. No inherited secrets.
 # shellcheck disable=SC2086
@@ -92,6 +116,8 @@ env -i \
   LLM_API_KEY="$NVIDIA_API_KEY" \
   LLM_MODEL="openai/${MODEL}" \
   LLM_BASE_URL="$BASE_URL" \
+  RUNTIME="$RUNTIME" \
+  SANDBOX_VOLUMES="$SANDBOX_VOLUMES" \
   openhands --headless $EXTRA -f "$TASK_FILE" > "$OUT_FILE" 2>&1
 STATUS=$?
 
