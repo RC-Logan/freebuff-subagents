@@ -114,9 +114,10 @@ echo "    scheme: ${SCHEME} (delegate.sh will match this)"
 # The skill was intentionally removed from the tree (DECISIONS.md #16): the
 # integrated Freebuff path is an MCP server (planned). If that route fails,
 # restore the skill from git history — it is preserved at tag skill-fallback.
-echo "==> Skill: removed in favor of an MCP server (planned — see DECISIONS.md)"
+echo "==> Skill: removed — the MCP server is the integration path (see DECISIONS.md #19)"
 echo "    fallback: preserved in git history at tag skill-fallback"
 echo "    (git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md)"
+echo "    register with Freebuff: ./bin/register-mcp.sh  (writes .agents/mcp.json)"
 
 # ---- NIM connectivity ping --------------------------------------------------
 echo "==> Pinging NIM with bare model ID '${DEFAULT_MODEL}'"
@@ -139,6 +140,6 @@ cat <<'NEXT'
 Setup complete. Next:
   1. Smoke test:  ./bin/smoke-test.sh
   2. Delegate:    ./bin/delegate.sh -t "your task" [-m minimaxai/minimax-m3]
-  3. From Freebuff: an MCP delegate tool is planned (see DECISIONS.md); until
-     it ships, delegate from the terminal via ./bin/delegate.sh.
+  3. From Freebuff: ./bin/register-mcp.sh, restart Freebuff, then invoke the
+     'delegate-openhands/delegate' tool (see README, Freebuff integration).
 NEXT

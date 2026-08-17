@@ -169,6 +169,21 @@ and ran `git gc --prune=now` so the old objects are gone locally too.
 Verified: no trace of the file, the phrases, or the identifiers in any
 reachable commit, tree, or commit message.
 
+### 19. MCP server built — DONE
+The MCP route from decision 13 is implemented: a zero-dependency stdio MCP
+server (`bin/mcp-server.py`, Python 3 stdlib only) exposing one `delegate`
+tool (`task_instructions` required; optional `role`, `working_directory`,
+`model`) that wraps `bin/delegate.sh` — all safety (Docker sandbox
+enforcement, sanitized environment, role routing, exit codes) is inherited.
+Registration is project-local, per the Freebuff/Codebuff source loader:
+`.agents/mcp.json` (standard `mcpServers` shape), searched at
+`{cwd}/.agents/mcp.json`, `{cwd}/../.agents/mcp.json`, `{homedir}/.agents/
+mcp.json`. `bin/register-mcp.sh` generates the file with this repo's
+absolute path; the tool is invoked as `delegate-openhands/delegate`.
+Caveat: MCP support is version-dependent in the shipped binaries — the
+source loader is active, but the installed client must expose it
+(verification is the first open item).
+
 ---
 
 ## Current status (2026-08-16)
@@ -176,7 +191,8 @@ reachable commit, tree, or commit message.
 - Repo published: **`github.com/RC-Logan/freebuff-subagents`** (private).
 - Self-tested: **61/61 assertions green** in `tests/run-tests.sh` (macOS 27).
 - The Freebuff skill was removed from the tree (fallback in git history);
-  the MCP server is the planned integrated path, not yet built.
+  the MCP delegate tool is built (decision 19); Freebuff loading it is
+  the remaining verification.
 - Git history purged of the sensitive research notes and related analysis
   (decision 18) — the repo is now safe to make public.
 - **Not yet live:** no API key in `.env`, no Docker installed, no real NIM
@@ -184,9 +200,8 @@ reachable commit, tree, or commit message.
 
 ## Open items
 
-- [ ] Build the MCP server exposing the `delegate` tool (research Freebuff's
-      MCP registration mechanism first — config file/format on the
-      installed client).
+- [ ] Verify the installed Freebuff client loads `.agents/mcp.json` and
+      exposes `delegate-openhands/delegate` (restart, then ask for the tool).
 - [ ] If the MCP route fails: restore the skill from git history and re-add
       the install hooks.
 - [ ] Set `NVIDIA_API_KEY` in `.env` and run `./bin/check-env.sh`.

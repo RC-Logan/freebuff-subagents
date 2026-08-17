@@ -107,13 +107,27 @@ Notes for step 3:
 installed OpenHands CLI uses the V1 (`agent_settings.json`) or legacy V0
 (`config.toml`) config scheme and writes the right one.
 
-## Skill → MCP (planned)
+## Freebuff integration (MCP)
 
 The Freebuff skill that originally shipped with this repo was **intentionally
-removed** (2026-08-16): the integrated path for Freebuff is an **MCP server**
-exposing the `delegate` tool — typed `role` + `task` + `working_directory` in,
-structured JSON out — which is strictly stronger than a prose skill. It is
-not yet built (see [`DECISIONS.md`](DECISIONS.md) #13/#16).
+removed** (2026-08-16): the integrated path is an **MCP server** exposing the
+`delegate` tool — typed `task` + `role` + `working_directory` in, structured
+JSON out — which is strictly stronger than a prose skill. The server is
+`bin/mcp-server.py` (zero-dependency stdio JSON-RPC, Python stdlib only),
+wrapping `delegate.sh`, so every safety guarantee carries over.
+
+**Register it** — project-local, per the Freebuff/Codebuff loader, which
+searches `{cwd}/.agents/mcp.json`, then `{cwd}/../.agents/mcp.json`, then
+`{homedir}/.agents/mcp.json`:
+
+```bash
+./bin/register-mcp.sh        # writes .agents/mcp.json with this repo's path
+```
+
+Then **restart Freebuff** and ask for the tool by name:
+`delegate-openhands/delegate`. If the tool doesn't appear, the installed
+client may not expose MCP yet — support is version-dependent in the shipped
+binaries even though the source loader is active.
 
 **Fallback:** the skill is preserved in git history at tag `skill-fallback`
 (the first push). Restore it with:
@@ -123,8 +137,6 @@ git show skill-fallback:.agents/skills/delegate-openhands/SKILL.md > SKILL.md
 # or restore the whole tree:
 git checkout skill-fallback -- .agents/skills/delegate-openhands
 ```
-
-Until the MCP server ships, delegate from the terminal.
 
 ## Day-to-day (after the one-time setup)
 
@@ -151,7 +163,8 @@ source of truth).
 ./bin/delegate.sh -t "Fix the failing test in ./src" -d ./src
 ./bin/delegate.sh -f /tmp/task.md -m minimaxai/minimax-m3 -d ./design
 
-# From Freebuff: MCP delegate tool (planned — see DECISIONS.md #16)
+# From Freebuff: use the 'delegate-openhands/delegate' MCP tool (see the
+# Freebuff integration section)
 ```
 
 Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe local config (e.g. `RUNTIME=process` without opt-in).
@@ -162,10 +175,13 @@ Exit codes: `0` success · `1` task failed · `2` invalid args · `3` unsafe loc
 bin/install.sh        # bootstrap: uv, openhands-ai, config, NIM ping
 bin/check-env.sh      # dry-run: prints resolved config, no side effects
 bin/delegate.sh       # sanitized-env headless wrapper (roles, per-call model routing)
+bin/mcp-server.py     # stdio MCP server exposing the delegate tool (stdlib only)
+bin/register-mcp.sh   # writes .agents/mcp.json for Freebuff
 bin/smoke-test.sh     # end-to-end validation
 lib/env.sh            # .env loader (env vars win over the file)
 config/               # config templates (V1 JSON + V0 TOML fallback)
 roles/<name>/         # capability roles: role.conf (model) + prompt.md (rules)
+.agents/              # project-local MCP registration (mcp.json.example tracked)
 tasks/smoke-task.md   # minimal task used by the smoke test
 tests/                # pre-run mock test suite (run-tests.sh)
 docs/WHY.md                            # why this repo exists and the problem it solves
@@ -215,6 +231,6 @@ docs/REPO_HYGIENE.md                    # standards for agents working on this r
 | 429 Too Many Requests | ~40 RPM baseline; wait, reduce `num_retries` backpressure, or split the task. |
 | Stream stalls ~300 s during tool calls | Known NIM streaming quirk with tool calls; retry or re-run the delegation. |
 | Context-limit error around 200K | Hosted GLM-5.2 caps context at ~202K tokens despite 1M marketing — split the task. |
-| Nothing to invoke from Freebuff yet | The skill was removed in favor of an MCP server (planned). Until it ships, delegate from the terminal via `./bin/delegate.sh`; the skill fallback lives in git history at tag `skill-fallback`. |
+| MCP tool not appearing in Freebuff | Restart Freebuff after `./bin/register-mcp.sh`; if it still won't load, the installed client may not expose MCP yet (version-dependent). Delegate from the terminal via `./bin/delegate.sh` meanwhile; the skill fallback lives at tag `skill-fallback`. |
 | Model name rejected | The API needs the **bare** model ID in `.env`; only OpenHands config gets the `openai/` prefix. |
 | Use my own model/API? | Set `TEXT_MODEL`/`TEXT_API_KEY`/`TEXT_BASE_URL` (and `VISION_*` for vision roles) in `.env`; see ROLES.md. |

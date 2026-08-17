@@ -273,6 +273,48 @@ check "no skills copy happens (feature removed)" "$RC" "0"
 contains "install.sh still notes the fallback" "$T5/install.log" "git history"
 
 # ===========================================================================
+echo "== mcp-server.py: stdio JSON-RPC protocol (mocked delegation)"
+TM="$WORK/tm"; mkdir -p "$TM/home" "$TM/dir"
+export HOME="$TM/home"
+export NVIDIA_API_KEY="nvapi-test-789"
+unset TEXT_API_KEY VISION_API_KEY RUNTIME ALLOW_PROCESS_SANDBOX
+
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"suite","version":"0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+  '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"delegate","arguments":{"task_instructions":"build a button","role":"browser-use","working_directory":"'$TM'/dir"}}}' \
+  '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"delegate","arguments":{}}}' \
+  '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"delegate","arguments":{"task_instructions":"x","role":"bogus"}}}' \
+  '{"jsonrpc":"2.0","id":6,"method":"nope"}' \
+  'not json' \
+  | python3 "$ROOT/bin/mcp-server.py" > "$TM/out.log" 2>&1
+
+check "mcp server exits 0" "$?" "0"
+containsF "initialize returns protocolVersion" "$TM/out.log" '"protocolVersion": "2025-03-26"'
+containsF "tools/list advertises delegate" "$TM/out.log" '"name": "delegate"'
+containsF "schema requires task_instructions" "$TM/out.log" '"required": ["task_instructions"]'
+containsF "role enum includes browser-use" "$TM/out.log" '"browser-use"'
+containsF "delegation returns exit code" "$TM/out.log" '\"exit_code\": 0'
+containsF "delegation returns changed_files" "$TM/out.log" '\"changed_files\": []'
+containsF "missing task flagged as tool error" "$TM/out.log" '"isError": true'
+containsF "unknown role rejected" "$TM/out.log" "unknown role"
+containsF "unknown method -> -32601" "$TM/out.log" '"code": -32601'
+containsF "parse error -> -32700" "$TM/out.log" '"code": -32700'
+
+# ===========================================================================
+echo "== register-mcp.sh: generates project-local .agents/mcp.json"
+TRM="$WORK/trm"; mkdir -p "$TRM"
+"$ROOT/bin/register-mcp.sh" "$TRM" > "$TRM/reg.log" 2>&1
+check "register-mcp exits 0" "$?" "0"
+test -f "$TRM/.agents/mcp.json"; RC=$?
+check ".agents/mcp.json written" "$RC" "0"
+containsF "registration has absolute server path" "$TRM/.agents/mcp.json" "$ROOT/bin/mcp-server.py"
+not_contains "no placeholder remains" "$TRM/.agents/mcp.json" "__REPO_ROOT__"
+python3 -m json.tool "$TRM/.agents/mcp.json" > /dev/null 2>&1; RC=$?
+check "registration file is valid JSON" "$RC" "0"
+
+# ===========================================================================
 echo
 echo "== results: ${PASS} passed, ${FAIL} failed"
 if [[ "$FAIL" -gt 0 ]]; then

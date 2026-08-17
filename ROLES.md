@@ -74,7 +74,7 @@ mkdir roles/my-role
 
 The shared baseline is added automatically; you only write the role-specific
 rules. (Previously roles were also exposed through a Freebuff skill — that
-skill was removed in favor of an MCP server, see DECISIONS.md.)
+skill was removed in favor of an MCP server exposing the delegate tool (see DECISIONS.md #19); register it with ./bin/register-mcp.sh.)
 
 ## When NOT to use a role
 

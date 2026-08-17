@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "delegate-openhands": {
+      "command": "python3",
+      "args": ["__REPO_ROOT__/bin/mcp-server.py"],
+      "env": {}
+    }
+  }
+}

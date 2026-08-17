@@ -37,8 +37,10 @@ guarantee the right operating discipline per task.
 - **Safety:** every delegation runs in a Docker sandbox with a sanitized
   environment; `RUNTIME=process` (no isolation) is refused without an
   explicit opt-in.
-- **Freebuff integration:** an MCP server exposing the `delegate` tool is the
-  planned path (see [`DECISIONS.md`](../DECISIONS.md) #13/#16); until it
-  ships, delegate from the terminal.
+- **Freebuff integration:** an MCP server exposing the `delegate` tool is
+  built and registered project-locally via `./bin/register-mcp.sh` (see
+  [`DECISIONS.md`](../DECISIONS.md) #19); invoke it as
+  `delegate-openhands/delegate`. Until your installed client loads it,
+  delegate from the terminal.
 - **Quality:** standards for agents working on this repo:
   [`REPO_HYGIENE.md`](REPO_HYGIENE.md).

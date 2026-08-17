@@ -32,7 +32,12 @@ echo "  vision model: ${VISION_MODEL:-${TEXT_MODEL:-$DEFAULT_MODEL}}"
 echo "  vision base:  ${VISION_BASE_URL:-${TEXT_BASE_URL:-$BASE_URL}}"
 echo "  vision key:   $(mask "$VISION_KEY")"
 echo "  sandbox:      ${RUNTIME}"
-echo "  skill:        removed (MCP route planned; fallback in git history at tag skill-fallback)"
+echo "  skill:        removed (fallback in git history at tag skill-fallback)"
+if [[ -f "$SCRIPT_DIR/.agents/mcp.json" ]]; then
+  echo "  mcp:          registered (.agents/mcp.json) — Freebuff should expose delegate-openhands/delegate"
+else
+  echo "  mcp:          not registered (run ./bin/register-mcp.sh)"
+fi
 echo "  openhands:    ${OH:-not installed (run ./bin/install.sh)}"
 if [[ "$RUNTIME" == "docker" ]]; then
   if command -v docker >/dev/null 2>&1; then
